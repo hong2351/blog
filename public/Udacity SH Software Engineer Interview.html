@@ -1,0 +1,4449 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Udacity SH Software Engineer Interview</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="created" content="2018-09-18T09:54:33+0800"/>
+        <meta name="modified" content="2018-09-18T10:16:52+0800"/>
+        <meta name="tags" content=""/>
+        <meta name="last device" content="黄明和’s MacBook Pro"/>
+    </head>
+    <body>
+        <div class="note-wrapper">
+            <h1>Udacity SH Software Engineer Interview</h1>
+<br>
+<h2>数据结构</h2>
+<h3>树</h3>
+<ul><li>二叉树
+</li></ul>
+<ol start="1"><li>Full: 每一个 node 都有 0 或者 2 children
+</li><li>Balenced: node 的左右子树高度差 <= 1
+</li></ol>
+<br>
+<pre><code class='code-multiline'>class Node {
+
+}</code></pre>
+<p><br></p>
+<br>
+<br>
+<h1>从零开始构建自动话海报生成服务</h1>
+<br>
+<p>由于微信生态的不可忽略性，企业开展增长活动的时候，都会考虑微信朋友圈的推广信息的流转问题，而推广海报作为一种图文信息丰富的载体，成为微信朋友圈流行的一种推广手段。</p>
+<br>
+<h2>技术分析</h2>
+<p>一张典型的活动推广海报大致长相如下:  </p>
+<p><img src="https://ipfs.io/ipfs/QmRAWmZAdoe68gV5qdEDSpxfyNuqBU7za3wMSM4Fj8BcVB" alt="poster" title=""></p>
+<br>
+<p>一般活动的海报都是估计一种或者几张</p>
+<br>
+<br>
+<br>
+<h1> Go 开发小记之 AES 加密</h1>
+<br>
+<br>
+<p>AES 是 Advanced Encryption Standard 是缩写，是一种对称式的加密算法。AES 的区块 block 长度是固定的 128 位:</p>
+<br>
+<pre><code class='code-multiline'>// The AES block size in bytes.
+const BlockSize = 16
+</code></pre>上面这段代码是在 <a href="https://github.com/golang/go/blob/master/src/crypto/aes/cipher.go#L15">Golang 的源代码中</a>, <code class='code-inline'>16 * 8 = 128</code>
+
+而密钥 key 的长度可以是 128, 192 和 256. 所以你也可以在 Golang 的<a href="https://github.com/golang/go/blob/master/src/crypto/aes/cipher.go#L33">相关代码中</a>看到相关的定义。这也就是我们为什么经常看到 AES-128, AES-192, 以及 AES-256 原因，后缀的数字128, 192, 256 指的就是 key 的长度.
+
+
+AES 有如下几种模式:
+
+<blockquote>
+需要填充的模式
+</blockquote>
+<ul><li>Electronic Codebook (ECB): 带加密的信息被分割成 blocks，然后 blocks 分别被单独加密. 这种模式的缺点是缺乏混淆性, 因为相同的 Plain Text block 会被加密成相同的 Cipher Text block. 所以数据模式的隐藏性很低。在大部分的加密场景都不推荐使用。
+</li><li>Cipher Block Chaining (CBC): CBC 在对信息进行加密的时候，Initial Value (IV) 需要随机的产生. 改信息的任何一部分都需要重新进行整个加密. 解密可以并行的进行.
+</li></ul>
+<br>
+<blockquote>
+<p>流式的加密模式</p>
+</blockquote>
+<br>
+<ul><li>Couter (CTR): CTR 的加密和解密都可以完全的并行。
+</li><li>Output Feedback (OFB): OFB 的加密和解密都能并行.
+</li><li>Cipher Feedback (CFB): OFB 的解密是并行的，但是加密不是。
+</li></ul>
+<br>
+<blockquote>
+<p>身份验证加密模式</p>
+</blockquote>
+<br>
+<ul><li>Counter with CBC-MAC (CCM): 这种模式是 CTR 和 CBC-MAC 的简单组合, 性能较差。
+</li><li>Offset Codebook Mode (OCB): 速度很快但是有专利限制.
+</li><li>Galosi/Counter Model (GCM): GCM 是 CTR 和 GHASH 的复杂组合，速度很快，但是复杂性高。
+</li></ul>
+<br>
+<p>这么多中模式，我们在工程中应该选择哪一种呢，有一个回答我十分赞同:</p>
+<p>>Considering the importance of authentication I would recommend the following two block cipher modes for most use cases (except for disk encryption purposes): If the data is authenticated by an asymmetric signature use CBC, otherwise use GCM.</p>
+<p>简单来说就是除非数据是通过非对称签名进行验证，则使用 CBC, 否则使用 GCM。</p>
+<br>
+<h3>CBC</h3>
+<br>
+<p>因为在 Golang 中 AES 已经有了现成的模块，所以我们可以很简单的就可以使用 AES 来进行加密, CBC 在输入不满足 <code class='code-inline'>aes.BlockSize</code> 的倍数的时候，需要做填充.</p>
+<br>
+<pre><code class='code-multiline'>func Pad(src []byte) []byte {
+	padding := aes.BlockSize - len(src)%aes.BlockSize
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(src, padtext...)
+}
+
+func Unpad(src []byte) ([]byte, error) {
+	length := len(src)
+	unpadding := int(src[length-1])
+
+	if unpadding &gt; length {
+		return src, nil
+	}
+	return src[:(length - unpadding)], nil
+}</code></pre>
+<p><br></p>
+<p>使用 <code class='code-inline'>KEY</code> 和 <code class='code-inline'>IV</code> 来进行加解密.</p>
+<br>
+<pre><code class='code-multiline'>// Encrypt AES CBC mode
+func Encrypt(key, iv, plaintext []byte) ([]byte, error) {
+	if len(plaintext)%aes.BlockSize != 0 {
+		plaintext = Pad(plaintext)
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	cbc := cipher.NewCBCEncrypter(block, iv)
+	cbc.CryptBlocks(ciphertext[aes.BlockSize:], plaintext)
+
+	return ciphertext, nil
+}
+
+// Decrypt AES CBC mode
+func Decrypt(key, iv, ciphertext []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ciphertext) &lt; aes.BlockSize {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
+
+	ciphertext = ciphertext[aes.BlockSize:]
+
+	cbc := cipher.NewCBCDecrypter(block, []byte(iv))
+	plaintext := make([]byte, len(ciphertext))
+	cbc.CryptBlocks(plaintext, ciphertext)
+
+	if plaintext, err = Unpad(plaintext); err != nil {
+		return nil, err
+	}
+
+	return plaintext, nil
+}</code></pre>
+<p><br></p>
+<h3>GCM</h3>
+<br>
+<ul><li>Encrypt
+</li></ul>
+<br>
+<pre><code class='code-multiline'>func Encrypt(plaintext []byte, key *[32]byte) (ciphertext []byte, err error) {
+	block, err := aes.NewCipher(key[:])
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	_, err = io.ReadFull(rand.Reader, nonce)
+	if err != nil {
+		return nil, err
+	}
+
+	return gcm.Seal(nonce, nonce, plaintext, nil), nil
+}</code></pre>
+<p><br></p>
+<ul><li>Decrypt
+</li></ul>
+<br>
+<pre><code class='code-multiline'>func Decrypt(ciphertext []byte, key *[32]byte) (plaintext []byte, err error) {
+	block, err := aes.NewCipher(key[:])
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ciphertext) &lt; gcm.NonceSize() {
+		return nil, errors.New("malformed ciphertext")
+	}
+
+	return gcm.Open(nil,
+		ciphertext[:gcm.NonceSize()],
+		ciphertext[gcm.NonceSize():],
+		nil,
+	)
+}</code></pre>
+<p><br></p>
+<h3>KEY, IV, Nonce</h3>
+<br>
+<ul><li>KEY
+</li></ul>
+<br>
+<p>KEY 当然是很重要的了，是一个你必须保密的东西。也许这就是为什么人们喜欢取名 <code class='code-inline'>XXX_SECRET_KEY</code> 的原因。在对称加密的情况下一般只要知道加密数据的 KEY, 就可以解密出来. 在非对称加密的时候，<code class='code-inline'>KEY</code> 由两部分: <code class='code-inline'>public key</code> 和 <code class='code-inline'>private key</code>. <code class='code-inline'>public key</code> 用来解密和检查签名, 而 <code class='code-inline'>private key</code> 用来加密签名。</p>
+<br>
+<ul><li>IV
+</li></ul>
+<br>
+<p>IV 是 <code class='code-inline'>initialization vector</code> 的缩写, 字面上意思是初始向量，作为加密迭代的初始输入。 IV 在不同的上下文有不太一样的意思, 但是大多数快加密操作中，<code class='code-inline'>IV</code> 应该需要随机产生和不可预测的.</p>
+<br>
+<ul><li>Nonce
+</li></ul>
+<br>
+<p>Nonce 就是 'a number used only once', 所以一个 nonce 应该且只能使用一次。</p>
+<br>
+<h1>Go 开发小记之日志</h1>
+<br>
+<p>日志对于 Web 服务来说是不可或缺的部分，正因为如此，这个领域也催生出了很多产品，比如日志分析的统治级占领者 Splunk, 对应国内有日志易。当然开源产品方面也层出不穷，广为使用的是 <a href="https://github.com/elastic/elasticsearch">Elasticsearch</a>。良好稳定的日志系统不仅在问题查询方面让工程师事半功倍，结构化的日志数据也为产品开发和增长提供一定的数据根据.</p>
+<br>
+<p>在 Golang 开发的服务中. 如何实现结构化的日志呢，有的同学喜欢 <a href="https://github.com/uber-go/zap">zap</a>, Uber 开源的一个结构化日志工具, 我目前使用的是<a href="https://github.com/sirupsen/logrus">logrus</a>. 两者很类似。如果对性能需要很高的化，在选择之前可以做一个简单的 benchmark, 而对于小型的 Web 服务来说，选择其一应该都没有什么问题。</p>
+<br>
+<ul><li>替换掉 Go 自带的 log
+</li></ul>
+<br>
+<p>无论是用 zap 还是 logrus, 我们都可以不再使用 Golang 自带的 <a href="https://golang.org/pkg/log">log</a> 了。用更加结构化的 logging 来代替。</p>
+<br>
+<pre><code class='code-multiline'>package main
+
+import (
+  "os"
+  log "github.com/sirupsen/logrus"
+)
+
+func init() {
+  log.SetFormatter(&log.JSONFormatter{})
+  log.SetOutput(os.Stdout)
+  log.SetLevel(log.WarnLevel)
+}
+
+func main() {
+  log.Info("Hello")
+  log.Warn("Oh")
+  log.Fatal("Oops")
+}</code></pre>
+<p><br></p>
+<p>你可以看到你可以设置不同日志输入的格式，级别等, 基本上和 log 的使用差不多。</p>
+<br>
+<ul><li>Logging with Fields
+</li></ul>
+<br>
+<p>为了日志的更可用，一般我们都会给日志携带相关的信息.</p>
+<br>
+<pre><code class='code-multiline'>  log.WithFields(log.Fields{
+    "name": "john",
+    "age": 12,
+  }).Info("hello")</code></pre>
+<p><br></p>
+<p>对于很多的应用，在服务工作的不同阶段，都需要输入相关的日志信息，但是其实这些日志信息都需要输出类似的信息，这个时候我们可以使用置默认的 Fields</p>
+<br>
+<pre><code class='code-multiline'>fields := log.Fields{"request_id": request_id, "user_ip": user_ip}
+reqLogger:= log.WithFields(fields)
+reqLogger.Info("Hello")</code></pre>
+<p><br></p>
+<ul><li>给你的 Context 添加 Logger
+</li></ul>
+<br>
+<p>我自己认为的最佳实践是在 per-request 的 context 添加一个 Logger，然后在这个 request 的生命周期内来使用。</p>
+<br>
+<pre><code class='code-multiline'>logger := &logrus.Logger{
+  Out: os.Stderr,
+  // Formatter: new(logrus.JSONFormatter),
+  Formatter: new(logrus.TextFormatter),
+  Hooks:     make(logrus.LevelHooks),
+  Level:     logrus.InfoLevel,
+}
+ctx.Logger = logger.WithFields(logrus.Fields{
+  "request": map[string]string{
+    "method":     r.Method,
+    "user-agent": r.UserAgent(),
+    "request":    r.RequestURI,
+    ...
+  },
+})
+
+handle(ctx)</code></pre>
+<p><br></p>
+<p>这样就可以在 handle 中方便的使用 Logger 来记录日志了.</p>
+<br>
+<br>
+<h1>这次我们没有成功</h1>
+<p>自从我认识到自己喜欢创造之后，我就不断的给自己挖了一个又一个的坑，直到有一天发现自己的GitHub上面已经有无数的未填满的坑之后，我开始停止了挖坑，慢慢学习给自己脑海闪现的想法做减法，更多让自己去多一点思考和阅读。</p>
+<br>
+<p>"Rework" 里面提到，可以把事情分为:</p>
+<br>
+<ol start="1"><li>必须要做的
+</li><li>我想要做的
+</li><li>我可以做的
+</li></ol>
+<br>
+<p>我们应该立即去做那些必须要做的，而不是去做那些想要做的或者可以做的，然后我自己确实那种总是把 '想要做的' 放到自己 todo list 第一位的人，这样的性格让我付出的代价是，我会花更多的时间去弥补自己没有完美完成 '必须要做的' 的后果. 我有一种预感: 学会控制和规划会是我一生都要学习的功课.</p>
+<br>
+<p>好吧，还是说说一次失败的团队协作经历，以及它给我带来什么吧.</p>
+<br>
+<h3>拍着大脑来的产品想法</h3>
+<p>我已经忘记了我们四个人是怎么就坐在一个叫做绿茶的餐厅，然后讨论到做点什么产品这个事情，还记得我说想做一个本地导游的平台，任何熟悉的人都可以成为导游然后帮助陌生的旅客提供本地服务，然后 H 说这不就是地陪吗，最后应该演化成为那种服务的平台的。然后 H 说他一直觉得公司的饭团系统挺好的，可以做一个针对群体的团体消费记账平台，初期用户也很容易找，公司内部，朋友公司内部都可以立即使用 (你知道我们当时是那么热血(天真)了吧). 然后大家觉得可行啊，当做团队训练嘛，我还算熟悉 Rails (其实刚刚接触而已), 那就直接用 Rails 吧，只有 M 一个女生，那就前端女神了. Y 似乎用过 Java 啊，那就开发 Android 客户端吧，iOS 客户端也不知道怎么我就去承担了. 没有什么具体的规划，一个产品研发团队就这样建立起来.</p>
+<br>
+<h3>没有技术背景的技术选型</h3>
+<p>连前后端都没有认识清楚，我们却一开始就坚持了前后端分离，Rails 仅仅作为 RESTful API Server, 前端采用当时最火爆的 AngularJS, 虽然没有 TDD，却也坚持了测试覆盖基本达到了 100% . 现在看来虽然我们没有多少技术经验，到也没有错的离谱，但是我们仍然一败涂地。</p>
+<br>
+<h3>打败我们的不是别人</h3>
+<p>打败我们的不是别人，是我们自己</p>
+<br>
+<ul><li>无效的规划
+</li><li>团员的节奏不一致
+</li><li>没有设置任何的small success
+</li></ul>
+<br>
+<p>我们没有设定有效的短期规划，只是埋头写代码，没有进行非常有效的沟通，甚至最基础的 API 设计有时候都有分歧，不一样的技术认知有时候也会导致我们对问题有着完全天壤之别的理解. 我们没有一致的工作的节奏，有时候我甚至还有不成熟的表现，对团队成员的工作状态心存不满，却不知道如何相互协助。最致命的是我们没有设计任何的small success, 我们让漫长的时间消逝了我们的激情，我们甚至没有来得及让我们的产品上线，我们的代码就这样埋葬在了GitHub上空落落的组织下面。</p>
+<br>
+<p>有时候忍不住回头看，内心依然异样的跳动: 我仍然有梦想，梦想创造一个独一无二的产品，可以我不敢确定我所有的小伙伴们，是否和我一样。</p>
+<br>
+<h3>一次真诚的交流</h3>
+<p>认识一个人最好的方法是他他一起做事情，这次的合作虽然没有带给我们成功的产品，但是给我们带来很好的友谊，我们更加深的了解对方，我们了解了每一个人的性格，每一个人的做事方式，每一个的好的不好的个人特征，我们都成为了很好的朋友，也许我们内心都有自己的答案: 也许一起做一个符合我们每一个人内心渴望的产品很难，但是我们可以做一辈子的好朋友. 在最对方最渴望的时候给予最温暖的帮助。</p>
+<br>
+<h3>最后</h3>
+<p>也许那些时光不再来，但是更好的会在未来等着.</p>
+<br>
+<h1>XCodeGhost事件然后呢</h1>
+<p>这两天，整个iOS开发者圈子都被 'XCodeGhost' 事件刷屏了，各大安全团队也都对事件，从各种角度进行分析，给我们安全外行人士还原了整个事情的前因后果，甚至已经人肉到了 'XCodeGhost' 的作者信息，苹果也下架不少的受到 'XCodeGhost' 感染的 APP. 本文我们就来梳理一下这件事情的来龙去脉吧，最后作为开发者或者普通的iOS用户，我们应该如何应对吧。</p>
+<br>
+<h3>XCodeGhost 事件</h3>
+<p>XCode 作为苹果 APP 的标准开发工具, 几乎每一位开发者或者团队都使用 XCode 去开发 APP，XCode 通过编译，链接，打包将开发者的代码变成一个个运行在我们手机中的APP, 那么如果开发者所使用的 XCode 不是苹果官方提供的版本，而是随意在某些网盘随意下载的 XCode 的话，就很难保证开发的 APP 除了正常的代码之外是否被恶意的 XCode 加入非正常的编译选项，然后植入恶意代码模块，后果将不堪设想。</p>
+<br>
+<p>XCodeGhost 事件就是这么一个事件，由于网络原因，国内不少开发者没有下载使用苹果官方提供的 XCode 开发工具，而是图下载速度快，在某网盘，或者迅雷上下载 XCode, 更加让人不可思议的事，XCodeChost 作者似乎很懂 SEO，通过百度搜索 XCode 出来的页面，除了指向苹果 AppStore 的那几个链接之外，都是指向各种不同 ID 的百度网盘上，这些网盘的地址在各个开发社区，人气社区，下载站点上帖子均有存在，而根据腾讯安全应急响应中心的报告，从这些网盘上下载的 XCode, 在路径 Xcode.app<i>Contents</i>Developer<i>Platforms</i>iPhoneOS.platform<i>Developer</i>SDKs<i>Library</i>Frameworks<i>CoreServices.framework</i>下，存在一个名为CoreServices.framework的 "系统组件" , 而从苹果官方下载的xcode安装包，却不存在这些目录和系统组件。也就是说，从这些网盘上下载的 XCode 安装包中，被别有用心的人植入了远程控制模块，通过修改 XCode 的编译参数，将这个恶意模块自动的部署到任何通过这个 XCode 编译的苹果 APP 中。</p>
+<br>
+<h3>XCodeGhost 的危害</h3>
+<p>被植入这些恶意模块的 APP 将成为了黑客控制用户的工具，在 APP 受到污染之后.</p>
+<br>
+<ul><li>启动、后台、恢复、结束时上报信息至黑客控制的服务器, 上报的信息包括：APP版本、APP名称、本地语言、iOS版本、设备类型、国家码等设备信息，能精准的区分每一台iOS设备。上报的域名是<a href="http://icloud-analysis.com">icloud-analysis.com</a>，同时腾讯安全应急中心还发现了攻击者的其他三个尚未使用的域名。
+</li></ul>
+<br>
+<ul><li>通过 openURL 这个API, 黑客可以下发伪协议命令在受感染的iPhone中执行, 黑客能够通过上报的信息区分每一台iOS设备，然后如同已经上线的肉鸡一般，随时、随地、给任何人下发伪协议指令，不仅能够在受感染的iPhone中完成打开网页、发短信、打电话等常规手机行为，甚至还可以操作具备伪协议能力的大量第三方APP。实际上，iPhone上的APP如果被感染，完全可以理解为黑客已经基本控制了你的手机！
+</li></ul>
+<br>
+<ul><li>黑客可以在受感染的 iPhone 中弹出内容由服务器控制的对话框窗口, 和远程执行指令类似，黑客也可以远程控制弹出任何对话框窗口。至于用途，将机器硬件数据上报、远程执行伪协议命令、远程弹窗这几个关键词连起来，反正我们是能够通过这几个功能，用一点点社工和诱导的方式，在受感染的iPhone中安装企业证书APP。
+</li></ul>
+<br>
+<ul><li>远程控制模块协议存在漏洞，可被中间人攻击, 在进行样本分析的同时，腾讯安全应急中心还发现这个恶意模块的网络协议加密存问题，可以被轻易暴力破解。我们尝试了中间人攻击，验证确实可以代替服务器下发伪协议指令到手机，成为这些肉鸡的新主人。
+</li></ul>
+<br>
+<p>植入的远程控制模块并不只一个版本。而现已公开的分析中，都未指出模块具备远程控制能力和自定义弹窗能力，而远程控制模块本身还存在漏洞可被中间人攻击，组合利用的威力可想而知。这个事件的危害其实被大大的低估了。</p>
+<br>
+<h3>有哪些已知的 APP 受到污染呢</h3>
+<p>目前发现的受到污染的 APP 名单如下。</p>
+<br>
+<ul><li>网易云音乐
+</li><li>滴滴出行
+</li><li>12306
+</li><li>中国联通手机营业厅
+</li><li>高德地图
+</li><li>简书
+</li><li>豌豆荚的开眼
+</li><li>网易公开课
+</li><li>下厨房
+</li><li>51 卡保险箱
+</li><li>同花顺
+</li><li>中信银行动卡空间
+</li><li>微信
+</li><li>口袋记账
+</li><li>滴滴打车
+</li><li>喜马拉雅
+</li><li>夫妻床头话
+</li><li>我叫 MT
+</li></ul>
+<br>
+<h3>我们该怎么办呢</h3>
+<p>作为开发者，当然是确定自己 XCode 没有包含上述所说的模块，本人使用的任何软件基本是都是在官方网站上下载的，基本上没有什么问题。</p>
+<br>
+<p>作为普通的 iOS 用户，应该第一时间更改自己的 APP ID 的密码，如果担心自己在 iOS 设备输入的其他的密码有被盗的可能，那么也十分有必要进行修改.</p>
+<br>
+<h3>最后</h3>
+<p>XCodeGhost 作者 @XcodeGhostSource 最后还将代码开发到 GitHub 上面: <a href="https://github.com/XcodeGhostSource/XcodeGhost">https://github.com/XcodeGhostSource/XcodeGhost</a>, 并且声明说所谓的XcodeGhost实际是苦逼iOS开发者的一次意外发现：修改Xcode编译配置文本可以加载指定的代码文件，于是我写下上述附件中的代码去尝试，并上传到自己的网盘中... , 不知道各位客官怎么看，反正我是不相信啊，正如 @onevcat 所说的: 算个账，微信用户总数5亿日活70%。每天每人就算5个POST请求，每个请求300Byte，日流入流量就接近500G，以及17.5亿次请求。据说服务器扔在亚马逊，那么资费算一下每个月应该是存储$450，请求$260K。这还只是单单一个微信，再算上网易云音乐等等，每月四五十万刀仅仅是苦逼iOS开发者的个人实验？</p>
+<br>
+<h1>独自旅行</h1>
+<h3>独自</h3>
+<p>旅行，本身就是独自的行为; 两个结伴而行，一群人抱团一起，也许身影成双成群，然而心思却总是独立的。</p>
+<br>
+<h3>归宿</h3>
+<p>小学之后，我便不断的换城市读书，这种常常的变迁让我形成了对城镇的一种奇怪的感受: 在某个地方久居也未曾有熟悉的感觉，初来乍到某城市也不感觉陌生。 有人说这是因为情绪系统中缺少归宿这中类别，可是，归宿，归宿，归向何处呢？</p>
+<br>
+<h3>温暖</h3>
+<p>上大学的时候，我最难忘的就是过年的火车了，难忘票的难买(买到了十有八九也是无座), 难忘的还有在列车上听的故事。我很清晰的记得2009年腊月的那趟 T238 次列车，一个女孩，来自海南，在哈尔滨读师范，大学三年走走停停，已经去了数不清的地方了，南北从海南黎水，到黑龙江牡丹江，东西从上海到拉萨，一个人看了无数城镇，上海的霓虹，云南的青岩，都存储在她厚厚旅记里面，还有一塌厚厚的火车票根。人看得多，就会求得少，行得深。她的笑容就像是山间丛林里错落到溪水边的阳光，特别的感觉温暖。</p>
+<br>
+<h3>愿望</h3>
+<p>每一座城，都有着它独特的温度，唯一的气色，另类的声响，希望每一位独自的旅行者可以感受到，然后带走些什么。</p>
+<br>
+<p>后记: T238 次列车，哈尔滨－广州东，温暖的女孩子，下期火柴人访谈，你会来吗？</p>
+<br>
+<h1>一行代码生成网站APP</h1>
+<p>在很久很久，我们开发一个互联网产品，我们只需要完成一个桌面 PC 版的网站，后来移动设备开始出现，很多闲有余力的人开始开发 wap 站点，再后来，移动端的发展越来越快，流量来源的比例越占越高，而 Android 和 iOS 在移动领域的战争中成为目前的赢家，而 PC 端的比重仍然不可小觑，所以很多的互联网产品不仅仅需要一个适应于 PC 的站点，而且还配套有相应的 Android 和 iOS App, 于此同时还维护着适用于小屏幕浏览器访问的移动版网站。地球上所有的开发者都厌倦了一套业务却要维护多个平台的代码这种事情，所以出现了HTML5, HTML5 + Native (Hybrid: PhoneGap)，以及今年特别火的 React Native，React 的野心很大，我这几天一直在玩，觉得 React 确实配得上它的野心，然而目前来看，没有一种方案可以统一整个前端 (泛指: 移动应用，网站前端) 的开发。</p>
+<br>
+<h2>思考</h2>
+<p>其实现在大多数网站都很不错的自适应 (Responsive)，无论是在桌面访问还是移动设备访问都有很不错的用户体验，但是他们依然需要一个移动 App，因为他们想让自己的服务常住到用户的屏幕上(然而我们都知道，其实除了首屏有意义之外，没有任何实质上的作用)，但是他们没有 Android 的开发人员，也没有 iOS 的开发人员，或者虽然有开发者，但是却没有精力去分散在那么多的平台上。 他们仅仅是想要用户可以快速的点击即可使用自己的服务而已，难道真的需要从头开始开发 iOS 和 Android 的 APP 吗，更何况他们的网站在移动设备上也有良好的用户体验。也许我们不需要那么麻烦，因为无论是 iOS 还是 Android 都有一个东西, 那就是 WebView, 我们何不把我们的网站放倒 WebView 里面去呢？</p>
+<br>
+<p>是的，我们可以那么做，剩下我们事情就是，找出那些需要 Native API 支持的功能，使用 Native API 的实现即可，咿，不对，这不又回到了 Hibrid 的模式了，我们不想去写任何的 Objective C/Swift 或者 Java 代码，那么到底可不可以呢?</p>
+<br>
+<h2>实验</h2>
+<p>我们都知道，在 iOS 开发中，Objective C 可以通过以下方法来运行 JavaScript 代码.</p>
+<br>
+<pre><code class='code-multiline'>[jsContext evaluateScript:@"javaScriptCodeString"]
+
+or
+
+[webView stringByEvaluatingJavaScriptFromString:@"javaScriptCodeString"];</code></pre>
+<p><br></p>
+<p>虽然 JavaScript 不能直接调用Objective C 代码，但是我们却是可以通过以下方法来 hack 以下。</p>
+<br>
+<ul><li>首先试图去访问一个 fake url
+</li></ul>
+<br>
+<pre><code class='code-multiline'>window.location.href = "MYAPP://something/something/..."</code></pre>
+<br>
+<ul><li>然后在 Objective C 中，通过判断 url 形式来判断需要做出什么动作.
+</li></ul>
+<br>
+<pre><code class='code-multiline'>- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
+  NSString *urlString = request.URL.absoluteString;
+  if (urlString 'match something') {
+    /*
+      do something;
+    */
+    return YES;
+  } else {
+    /*
+     do something;
+    */
+    return NO;
+  }
+}
+</code></pre>
+<p><br></p>
+<p>有了这两个东西，我们就可以往我们的网页中 inject 一些 hook 了，然后来实现一下 Web API 到 Native API 的连接了, 那么我们就有可能实现一个快速将我们网站变成一个 iOS 的工具了。</p>
+<br>
+<p> Take is cheap, show me the code </p>
+<br>
+<pre><code class='code-multiline'> URL -&gt; iOS APP</code></pre>
+<br>
+这两天，我实现了一个叫做 Applize 的项目，这是一个将网站变成 iOS APP 的一个工具项目，只需要两步:
+
+<ul><li>输入你的网站 URL
+</li><li>编译项目
+</li></ul>
+<br>
+<p>你就可以得到一个属于你网站的 iOS APP 喽，当然，这只是一个简单的原型，不过，输入你的个人网站 URL，试试吧。 查阅代码，你可以了解更多哦。</p>
+<br>
+<p><a href="https://github.com/metrue/Applize">https://github.com/metrue/Applize</a></p>
+<br>
+<h1>认识和使用Flux</h1>
+<p>Flux 不是一种框架也不是一个库，它是实现 React 单向数据流的一种新架构。在 Facebook 内部和 React 配合使用。Facebook 提供了一个 Dispatcher 库项目，dispatcher 是一种全局的 pub/sub handler，而 handler 则会将 payloads 广播到注册的回调里。 一种典型的 Flux 框架会使用 NodoJS 的 EventEmitter 模块来构建事件系统来管理应用的状态.  通过了解各个单独的模块，我们可以更加了解 Flux 架构.</p>
+<br>
+<ul><li>Actions: 一些 Helper methods 来协助数据向 Dispatcher 的传递.
+</li><li>Dispatcher: 接收 actions, 然后广播 payloads 到注册的回调。
+</li><li>Stores: 包含那些关于应用状态和逻辑，注册到 dispatcher 的容器.
+</li><li>Controller Views: React 组件，从 stores 中获取 state，然后通过
+</li></ul>
+<p>props 传递到子组件.</p>
+<br>
+<p>Flux模块示意图</p>
+<br>
+<p>那么我们的 API 和上图是什么关系呢，当我们需要和外部 (比如后端的数据API) 相互作用的时候，我们该怎么办呢，<a href="https://scotch.io/tutorials/getting-to-know-flux-the-react-js-architecture">这篇文章</a> 说在 Actions 中引入数据到整个 Flux FLow 是一种最佳方式.</p>
+<br>
+<h2>Dispatcher</h2>
+<p>Dispatcher 是整个应用的中心枢纽, 管理着整个过程。 它接收 actions 然后 dispatch actions 和数据到注册的回调中。 Dispatcher 将 payload 广播到所有注册的回调中，而且可以以特定的顺序去调用那些回调，而且可以在执行之前进行等待。你的应用中只有一个 dispatcher， 它扮演着应用的中心枢纽。</p>
+<br>
+<pre><code class='code-multiline'>
+var Dispathcer = require('flux').Dispatcher;
+var AppDispatcher = new Dispatcher();
+
+AppDispatcher.handleViewAction = function(action) {
+  this.dispatcher({
+    source: 'VIEW_ACTION',
+    action: action
+  });
+}
+
+module.exports = AppDispatcher;
+</code></pre>
+<p><br></p>
+<p>在上面的例子中，我们就创建了一个dispatcher, 然后创建了一个handleViewAction 方法。 当你想区分是view触发的actios还是 server API 触发的actions的时候，这种抽象是很有用的。 我们的方法调用 dispatch 方法，它将action payload 广播到它注册的回调里。 这个方法可以在 Stores 中发生，并且在一个 state 更新中产生结果。</p>
+<br>
+<p>整体图如下：</p>
+<p>Dispatcher dispatch</p>
+<br>
+<p>Dispatcher 最cool的地方是它可以在我们的 Stores 里面定义依赖 (Dependencies).  所以如果我们的应用里有一部分依赖于其他部分先更新，为了正确的render，Dispatcher 的 waitFor 方法会特别有用。 为了利用这个特性，我们需要保存 Dispatcher 的注册方法(registration)的返回值，所以我们可以在我们的 Store 中这么做。</p>
+<br>
+<pre><code class='code-multiline'>  ShoeStore.dispatcherIndex = AppDispatcher.register(payload) {
+
+  };</code></pre>
+<p><br></p>
+<p>在我们的 Store 中，当我们处理分发过来的 action, 我们可以使用 Dispatcher 的 waitFor 方法去保证  ShoeStore 被更新。</p>
+<br>
+<pre><code class='code-multiline'>case 'BUY_SHOES':
+  AppDispatcher.waitFor([ShoeStore.dispatcherIndex], function() {
+    CheckoutStore.purchaseStoes(ShoeStore.getSeletedShoes());
+  });</code></pre>
+<p><br></p>
+<h2>Stores</h2>
+<p>在 Flux 中， Stores 管理着我们应用的状态。也就是 Store</p>
+<p>负责管理数据，数据的获取，以及回调函数的 disapather.</p>
+<br>
+<pre><code class='code-multiline'>
+var AppDispatcher = require('../dispatcher/AppDispatcher');
+var ShoeConstants = reuquire('../constants/ShoeConstants');
+var EventEmitter = require('events').EventEmitter;
+var merge = require('react/lib/merge');
+
+var _shoes = {};
+
+function loadShoes(data) {
+  _shoes = data.shoes;
+}
+
+var ShoeStore = merge(EventEmitter.prototype, {
+  getShoes: function() {
+    return _shoes;
+  },
+
+  emitChange: function() {
+    this.emit('change');
+  },
+
+  addChangeListener: function(callback) {
+    this.on('change', callback);
+  },
+
+  removeChangeListener: function() {
+    this.removeListener('change', callback);
+  }
+});
+
+AppDispatcher.register(function(payload) {
+  var action = payload.action;
+  var text;
+
+  switch(action.actionType) {
+    case ShoeConstants.LOAD_SHOES:
+      loadShoes(action.data);
+      break;
+    default:
+      return true;
+  }
+
+  ShoeStore.emitChange();
+
+  return true;
+});
+
+module.exports = ShoeStore;</code></pre>
+<p><br></p>
+<p>上面的代码我们使用了 NodeJS 的  EventEmitter, 它让我们可以监听和广播我们的事件. 然后我们的 Views/Components 可以基于这些事件去更新。 因为我们的View Controller 监听这些事件，所以发射这些改变的事件可以让我们的 View Controller 知道我们的应用 state 已经改变，可以去获取这些状态然后保持应用的更新。 与此同时，我们也屌用了 AppDispatcher 的 register 我们的回调，着意味着我们的 Store 现在监听了 AppDispatcher 的广播。而 switch 语句则判定所到来的广播是否需要响应的action去承担。如果有相应的action响应，一个事件就会被发射，那些监听这个事件的view就会更新它们的states.</p>
+<br>
+<p>Store, Dispatch, Action, Controller View</p>
+<br>
+<p>而public方法 getShoes 则是获取所有的shoes放到 _shoes 对象中，然后在我们的组件中使用这些数据.  这只是一个简单的例子，复杂的逻辑我们可以放到这里，而不是 views，可以让我们的代码更佳整洁.</p>
+<br>
+<h2>Action Creator & Actions</h2>
+<p>Action Creators 是发送 actions 到 Dispatcher 的一组方法的集合, Actions 是通过 dispatcher 传送的真正的 payloads; Facebook 这样使用 Action 的， 一个action包含action type, 和 action data, action type 是常量(constants), 定义了什么action即将发生，而action data 则是action的数据。对于注册了的回调函数来说，action type 决定了哪一个回调函数去处理，而action data 则成为了回调函数的输入参数。</p>
+<br>
+<pre><code class='code-multiline'> var keyMirror = require('react/lib/keyMirror');
+
+ module.exports = keyMirror({
+    LOAD_SHOES: null
+ });</code></pre>
+<p><br></p>
+<p>我们使用 keyMirror 来定义我们的我们的Constants, 看下面的例子你就知道 keyMirror 的基本功能了。</p>
+<br>
+<pre><code class='code-multiline'>var keyMirror = require('keymirror');
+key = keyMirror({NAME: null});
+
+key -&gt; {NAME: 'NAME'}
+</code></pre>
+<p><br></p>
+<p>我们来看看相应的 Action Creator 怎么定义吧:</p>
+<br>
+<pre><code class='code-multiline'>var AppDispatcher = require('../dispatcher/AppDispatcher');
+var ShoeStoreConstants = require('../constants/ShoeStoreConstants');
+
+var ShoeStoreActions = {
+  loadShoes: function(data) {
+    AppDispatcher.handleAction({
+      actionType: ShoeStoreConstants.LOAD_SHOES,
+      data: data
+    });
+  };
+};
+
+module.exports = ShoeStoreActions;</code></pre>
+<p><br></p>
+<p>在上面的代码中，我们创建了一个loadStores的action，通过 dispatcher 广播这个 action， 这样 ShoeStore 里面就会听到这个事件，然后调用相应的方法去装载一些shoes。</p>
+<br>
+<h2>Controller Views</h2>
+<p>Controller Views 就是一些 React 组件，这些组件监听事件的改变，然后从Stores获取应用的状态，然后通过props传递数据到子组件中。</p>
+<br>
+<p>Store Controller View</p>
+<br>
+<pre><code class='code-multiline'>var React = require('react');
+var ShoesStore = require('../stores/ShoeStore');
+
+function getAppState() {
+  return {
+    shoes: ShoeStore.getShoes();
+  };
+}
+
+var ShoeStoreApp = React.creteClass({
+  getInitialState: function() {
+    return getAppState();
+  },
+
+  componentDidMount: function() {
+    ShoeStore.addChangeListener(this._onChange);
+  },
+
+  componentWillUnmount: function() {
+    ShoesStore.removeChangeListener(this._onChange);
+  },
+
+  render: function() {
+    &lt;ShoeStore shoes={this.state.shoes}/&gt;
+  },
+
+  _onChange: function() {
+    this.setState(getAppState());
+  }
+});
+
+module.exports = ShoeStoreApp;</code></pre>
+<p><br></p>
+<p>在上面的例子中，我们使用 addChangeListener 去监听事件的改变，然后更新应用的状态当接收到事件的时候。 我们的 Stores 持有我们应用的 state, 我们使用 Stores 中的 Public 方法获取数据，然后set 应用的 state.</p>
+<br>
+<h2>放在一起</h2>
+<p>我们已经对 Flux 每一个单独的模块进行了分析了解，我们现在对于 Flux 架构如何工作有了一个更好的认识了，通过下面这幅图，也许我们可以更加清晰了。</p>
+<p>Flux 架构工作流</p>
+<br>
+<p>至此，我相信你应该可以在你下一个 React 项目中使用 Flux 架构了。</p>
+<br>
+<h2>参考文献</h2>
+<p><a href="https://scotch.io/tutorials/getting-to-know-flux-the-react-js-architecture">Getting To Know Flux, the React.js Architecture</a></p>
+<br>
+<h1>善用Git-Hook-安全使用GitHub</h1>
+<br>
+<p>作为程序员，我们都应该对仔细的对待敏感信息，无论是自己的私人信息，还是公司的商业信息，轻微的泄露，有时候后果也许也会十分严重。那么如何最大限度的避免敏感信息的泄漏呢，当然首先我们让自己成为一个细心谨慎的工程师，当然我们也可以用一些简单的方法帮助我们防止敏感信息被泄露。</p>
+<br>
+<p>我是一个重度的 GitHub 用户，之前在 <a href="www.intel.com">Intel</a> 和 <a href="www.synopsys.com">Synopsys</a> 时候，虽然所在的组都没有使用 Git 作为版本管理工具，我自己的私有项目也会使用 Git 来管理，而同时有一些项目需要开源，我就将它们放到了 GitHub 上，我们都知道 GitHub 是程序员们最重要的开源协作社区了，当你的代码开放出去了之后，所有人都可以随时随地的 clone, force, 然后如果有同学热心的和你一起改进你的项目的时候，还会给你发 Pull Request, 这样你就可以 merge 他的代码了，这就是程序员们在 GitHub 上的写作方式。</p>
+<br>
+<p>开放，就意味着所有人可以浏览和获取，所有人当然就包括一些怪蜀黍啦，如果你有敏感信息嵌入在代码中，然后被这些怪蜀黍哪去做坏事，那后果可以很严重，特别像我这样长时间游走在很多项目中间，很多时候难免会不小心把一些不应该放的信息 hardcode 到代码中，当然当时也许只是为了调试方便或者其他原因，但是当开发结束，兴高采烈的提交代码的时候却很容易忘记了删掉这些敏感信息。git push 一敲，怪蜀黍们就在 GitHub 拿到这些信息，然后开始作恶了。</p>
+<br>
+<h3>怎么办呢</h3>
+<p>在吃过这种亏了之后，我就想，我怎么才能避免自己再出这样的事情呢，除了让自己更仔细，遵循一定的代码管理原则，比如特定配置文件不放到版本管理系统，我还能做什么呢。我就想，我把 git 封装一下好了，把 git commit wrap 成自己的脚本，在脚本中做安全检查，比如关键字检测。这不是 hook 吗，我直接做一个 global 的 git hook 不就可以了吗。</p>
+<br>
+<p>我的目标是避免敏感信息被 commit， 那么应该做的 pre-commit 的 hook, 当然为了方便，我们应该建立一个全局的 pre-commit hook，也就是设置一个全局的 hook, 这样我们就可以避免在每一个 repo 下面都重复的建立相应的 hook, 所有的 repo 公用一些通用的 hook. 具体的做法是这样子。</p>
+<br>
+<ol start="1"><li>配置全局模版目录
+</li></ol>
+<br>
+<pre><code class='code-multiline'>git config --global init.templatedir '~/.git-templates'</code></pre>
+<br>
+这样之后，只用你运行了  git init , git 就会把这个  ~/.git-templates  的文件都复制到你的 repo 的 .git 目录下。
+
+<ol start="2"><li>创建全局的 hooks 目录
+</li></ol>
+<br>
+<pre><code class='code-multiline'>mkdir -p ~/.git-templates/hooks</code></pre>
+<br>
+<ol start="3"><li>开始编写你的 hook
+</li></ol>
+<br>
+<pre><code class='code-multiline'>cd ~/.git-templates/hooks
+vim pre-commit</code></pre>
+<p><br></p>
+<p>由于我们想要的防止敏感信息被commit，所以我们需要建立的commit之前的checker，也就是 pre-commit hook</p>
+<br>
+<p>下面就是一个简单的 pre-commit 的原型.</p>
+<br>
+<pre><code class='code-multiline'>#!/bin/bash
+#
+# pre-commit hook
+# to check if sensitive information added to source code
+#
+
+DANGER_WORDS=('aws' 'key' 'password' 'username' 'phone' 'email' 'ssh')
+
+for i in ${DANGER_WORDS[@]}; do
+  git diff | grep -i ${i}
+  if [ $? = 0 ];then
+    echo "there is DANGER information being commited, are you sure?"
+    echo "ENTER yes/no"
+    read YES_OR_NO
+    if [ ${YES_OR_NO} = 'yes' ];then
+      # do nothing
+      echo 'commit is going on'
+    else
+      echo 'giving up commit'
+      exit 0
+    fi
+  fi
+done</code></pre>
+<p><br></p>
+<p>这样没建立一个新的 repo, 也就是 git init 的时候，这个 pre-commit 就会生效，如果你希望你的之前的 repo 也拥有这样的 hook, 你可以到所有的 repo 下面 运行</p>
+<br>
+<pre><code class='code-multiline'>git init</code></pre>
+<br>
+这样一个简单的 pre-commit 就大功告成了，在你 commit 的时候帮你检查你是否添加了敏感信息。
+
+<h1>自己动手写一个vim插件吧</h1>
+
+每一个程序员都应该有洁癖, 这个洁癖应该包括两个方面:
+一是代码书写的整洁，二是代码逻辑的清晰简洁。第二点需要我们不断的学习，大量的阅读思考，日积月累才能做到，因为逻辑的清晰，需要我们的良好的算法设计，结构优化，性能调优等等，只有长期的知识积累才能做到。然后代码书写的整洁却是我们可以随时做到，而且各种各样的
+IDE
+也都有着良好的美化功能。所以整洁的代码书写如果我们不想自己动手去整理，我们大可以让我们的工具帮我们来完成。
+
+vim一直是我的主打编辑器，尝试了其他很多编辑器之后，我还是回到了vim。有了
+<a href="https://github.com/VundleVim/Vundle.vim">vundle</a>,
+vim实在是太方便了，无数优良的插件，让我们的vim几乎可以完成我们日常中所有需求。来到了 <a href="secondspectrum.com">secondspectrum</a>
+之后，我的每一段代码至少都会被一位同事 review,
+所以良好的代码风格，整洁的代码书写真的关乎颜面啊，所有前天我同事和我说，我的代码里面有很很多句尾空格，能不能去掉。我大惊.
+ :set list 
+一看，果然好多句尾空格，想了一下，总不能不同敲击 :%s<i>\s+$</i>/g 来去掉这烦人的东西吧，还是google看看有没有可以用的插件吧，搜了一圈，没有看到合适的(莫非我姿势不对?)。
+
+好吧，那就自己来做一个吧。
+
+<h3>开始动手吧</h3>
+我们知道写vim的插件使用
+[vimL](<a href="https://en.wikipedia.org/wiki/Vim_(text_editor)#Vim_script)">https://en.wikipedia.org/wiki/Vim_(text_editor)#Vim_script)</a>, 当然现在我们也可以使用 Ruby, Python 等来编写 vim 插件，不过 vimL 其实也不难，简单看看就可以使用了。
+
+<ul><li>构建Pathogen<i>Vundle</i>NeoBundle<i>Plug</i>VAM-compatible 的插件项目结构
+</li></ul>
+<br>
+<pre><code class='code-multiline'>初始化你的插件目录如下:</code></pre>
+<br>
+<pre><code class='code-multiline'>
+~/.vim/autoload/...
+      /doc/...
+      /autoload/...
+      /ftplugin/...
+      /indent/...
+      /plugin/...
+      /syntax/...
+      /...
+</code></pre>
+<p><br></p>
+<p>让我们来简单了解一下各个目录和文件都有什么用吧。</p>
+<br>
+<ol start="1"><li>autoload
+</li></ol>
+<p>vim 插件和常规使用的一些 functions</p>
+<ol start="2"><li>doc
+</li></ol>
+<p>文档</p>
+<ol start="3"><li>ftplugin
+</li></ol>
+<p>使用于指定文件类型的vim插件脚本, 这里面所有以 .vim  结尾的文件在检测到文件类型之后，如果文件名匹配都会被  source .</p>
+<ol start="4"><li>indent
+</li></ol>
+<p>针对指定文件类型的缩紧设置</p>
+<ol start="5"><li>plugin
+</li></ol>
+<p>标准的vim插件, 这里所有以  .vim  结尾的文件在 vim 启动的时候都会被  source </p>
+<ol start="6"><li>syntax
+</li></ol>
+<p>这里放置的是语法高亮设置。</p>
+<br>
+<p>有了这些基本了解之后，我们就可以开始动手了</p>
+<br>
+<ul><li>编写插件代码
+</li></ul>
+<br>
+<p>给我的插件命名为 ’trims' 吧，简单但是不明了。</p>
+<br>
+<pre><code class='code-multiline'>  $ mkdir trims
+  $ cd trims
+  $ mkdir doc plugin
+  $ echo "a simple vim plugin to remove space in the end of line" &gt; README</code></pre>
+<p><br></p>
+<p>我们的插件只要这么简单的结构就可以了。</p>
+<br>
+<pre><code class='code-multiline'>  $ vim plugin/trims.vim</code></pre>
+<br>
+内容添加如下:
+
+<pre><code class='code-multiline'>fun! TrimWhitespace()
+  let l:save_cursor = getpos('.')
+  %s/\s\+$//e
+  call setpos('.', l:save_cursor)
+endfun
+
+" trim end of line space hook
+autocmd BufWritePre &lt;buffer&gt; call TrimWhitespace()</code></pre>
+<p><br></p>
+<p>这样我们就完成了我们的插件书写，内容很简单，对吧。一个函数  TrimWhitespace() , 使用正则替换掉句尾的空格，然后在我们保持我们的文件 :w, 就调用我们的函数。</p>
+<br>
+<ul><li>测试我们的插件
+</li></ul>
+<br>
+<p>我们可以很简单的测试我们插件，我们可以在我们的  ~<i>.vimrc  添加  source /path</i>to/trims.vim, 或者我们把我们整个 trims 目录copy到我们的插件目录下。然后随意编辑一个文件，然后保存即可看到效果。</p>
+<br>
+<ul><li>发布我们的插件
+</li></ul>
+<br>
+<p>写好插件，我们当然希望可以帮助到其他人喽，如何让我们以及其他人可以简单的使用我们的插件呢，vundle 当然是最方便的啦。</p>
+<br>
+<ol start="1"><li>push 插件到 <a href="https://github.com">GitHub</a>
+</li></ol>
+<br>
+<p>先到  <a href="https://github.com">GitHub</a> 上开一个 repo，比如我们就叫做 "trims", 然后push我们的插件到repo上。</p>
+<br>
+<pre><code class='code-multiline'>  $ cd trims
+  $ git init
+
+  $ git remote add origin https://github.com/metrue/trims.git
+  $ git push -u origin master</code></pre>
+<p><br></p>
+<ol start="2"><li>配置 .vimrc 按照并且使用我们的插件
+</li></ol>
+<br>
+<p>首先，当然要先确保你已经安装并且配置好了</p>
+<p><a href="https://github.com/VundleVim/Vundle.vim">vundle</a>, 然后在你的  ~/.vimrc  中添加</p>
+<br>
+<pre><code class='code-multiline'>  Plugin 'metrue/trims'</code></pre>
+<br>
+然后运行 vim, 运行  :BundleInstall . 安装完毕之后，你的vim就可以使用我们自己写的去掉句尾空格的插件了.
+
+<h3>结尾</h3>
+本文demo的插件地址:
+<a href="https://github.com/metrue/trims">https://github.com/metrue/trims</a>
+
+<h1>优雅的使用Node的child_process中的spawn和exec</h1>
+我们都知道在 Node 中我们可以通过  child_process  中的 exec 或者 spawn 来运行外部命令，而外部命令将成为我们 Node 进程的子进程，然后我们可以在我们的 Node 进程中对这些子进程进行管理。这篇文章，我们来聊聊如何优雅的使用 exec, spawn 以及管理我们 Node 进程的子进程。
+
+<h3>开始使用</h3>
+如果用 spawn, 我们一般可以这样写我们的程序
+
+<pre><code class='code-multiline'>  const script = `/path/to/your/script`; // or just some command
+  const arguments = [];
+  const p = spawn(script, arguments);
+
+  p.stdout.on('data', (data) =&gt; {
+    // do something
+  });
+
+  p.stderr.on('data', (data) =&gt; {
+    // do something
+  });
+
+  p.on('exit', (err) =&gt; {
+    // do something
+  });</code></pre>
+<p><br></p>
+<p>而如果使用 exec 的话，我们可以这样写.</p>
+<br>
+<pre><code class='code-multiline'>  const script = `/path/to/your/script`; // or just some command
+  const arguments = [];
+  const p = exec(script, (err, stdout, stderr) =&gt; {
+    // do something
+  });</code></pre>
+<p><br></p>
+<p>这样，我就可以愉快的在我们的 Node 程序中运行外部命令了。直到我们要对我们的子进程做更多的管理的时候。</p>
+<br>
+<h3>管理子进程</h3>
+<p>如果我们要运行的外部命令或者脚本是一个很健康的脚本，我们就可以省心了，然后很多时候，我们要运行的脚本通常豆不是我们自己写，而且很多时候不由我们控制，甚至我们都不知道运行的是什么任务，比如我们要运行的是一个恶意脚本，比如:</p>
+<br>
+<pre><code class='code-multiline'>  !#/bin/bash
+
+  while [ 1 ]; do
+    // calculate huge stuff
+  done</code></pre>
+<p><br></p>
+<p>这样永恒运行的脚本，会一直暂用我们的 cpu。所以我们会想到，我们应该给我们要运行的任务设计一个 Timeout 机制呀。所以我们的程序会变成这样。</p>
+<br>
+<pre><code class='code-multiline'>  const script = `/path/to/your/script`; // or just some command
+  const arguments = [];
+  const p = exec(script, (err, stdout, stderr) =&gt; {
+    // do something
+    if (err) console.log(err);
+    if (stderr) console.log(stderr);
+    if (stdout) console.log(stdout);
+  });
+
+  const TIMEOUT = 3600;
+  setTimeout(() =&gt; {
+    process.kill(p.pid, 'SIGKILL');
+  }, TIMEOUT);</code></pre>
+<p><br></p>
+<p>这样我们有可以愉快的去玩耍了。直到有一天，我们的客户把脚本变成了下面的这样子。</p>
+<br>
+<pre><code class='code-multiline'>  !#/bin/bash
+
+  sleep 10000; // 或者 cat /dev/zero &gt; /dev/null
+  while [ 1 ]; do
+    // calculate huge stuff
+  done</code></pre>
+<p><br></p>
+<p>我们发现我们机器怎么越来越慢呀，用 ps 一看，原来我们的坏任务一直都没有被杀掉，这是为什么呢，这个版本的脚本和上一个脚本不就多一个命令，为什么就杀不掉呢，难道我们设定的定时杀没有被调用吗，我们可以看看。将定时程序变成下面的样子。</p>
+<br>
+<pre><code class='code-multiline'>  setTimeout(() =&gt; {
+    const killed = process.kill(p.pid, 'SIGKILL');
+    if (killed) {
+      console.log('killed');
+    }
+  });</code></pre>
+<p><br></p>
+<p>咦，我们看到了 killed 呀，明明表明我们脚本已经被杀掉了。但是我们脚本的子进程 sleep<i>cat 却没有退出，原因是当我们的脚本在运行到 sleep</i>cat 的时候，这些作为操作系统的原生命令，他们属于我们脚本的子进程，他们的父进程就是我们的正在运行的脚本，父进程此时会等待 ( waitpid ) 子进程的运行, 就在此时，收到了 SIGKILL, 父进程立即被杀掉，没有进行对于它的子进程的清理工作，所以它的子进程变成了孤儿进程 ( organ child ) , 托管到了上级的父进程了。</p>
+<br>
+<p>也就是当我们的脚本里运行着子进程，我们杀掉父进程，也就是我们的脚本进程，子进程并不会因此而死掉，而是变成了孤儿进程，进行运行着。</p>
+<br>
+<p>但是，为什么我们的 exec 的回调也没有被调用呢，让我们看看文档吧。原来只有进程终止了之后才会走进回调中。exec 所运行的脚本被 (SIGKILL 或者 SIGTERM ) 所 KILL 之后，子进程依然还在运行，所以 exec 的回调不会被调用，这个时候，如果手动去杀掉这个剩下的孤儿进程 ( 比如我们可以用 kill  的方式 ) ，那么我们就可以到 exec 的回调函数得到了运行，而且给出正确了的 error 信息。</p>
+<br>
+<p>那么我们如何可以知道，我们的脚本进程是否真的退出了，是否会有一个异步事件发生呢，有的，不过 exec 不支持，但是 spawn 可以做到这一点。</p>
+<br>
+<pre><code class='code-multiline'>const spawn = require('child_process').spawn;
+const script = `${__dirname}/timeout_task.sh`;
+const p = spawn(script);
+
+p.stdout.on('data', (data) =&gt; {
+  // do something
+});
+
+p.stderr.on('data', (data) =&gt; {
+  // do something
+});
+
+p.on('exit', (err) =&gt; {
+  // do something
+});
+
+setTimeout(() =&gt; {
+  console.log(process.kill(p.pid, 'SIGKILL'));
+}, 1000);
+</code></pre>
+<p><br></p>
+<p>这样，我们可以看到，当我们用 ( SIGKILL 或者 SIGTERM ) 去 kill 运行的子进程时，'exit' 事件就会被触发，我们可以看到预期的 error 信息。这样我们就在可以在这个回调里来做一些事情了。但是我们还是没有办法在 KILL 这个进程的同时能有完全的清理其正在运行的子进程。那么如何才能优雅的解决这个问题呢？</p>
+<br>
+<p>如果我们能够获得我们正在运行的进程的 group id，然后试图去杀掉这个 group 下的所有进程，这样是否可以解决我们的问题呢？这样显然不行，因为我们并不能确定这个 group id 下面的子进程都是我们的目标进程，除非我们自己去生成这个 group id，然后将我们运行的进程的 group 设为这个 id . 显然这种方式也并不优雅，如果能够让要运行进程不依附于我们的 Node 程序，而是一个独立的进程，那么杀掉这个独立进程的 group 下面的进程，显然是合理而且正确的。而 spawn 真的可以帮我们做到这一点。</p>
+<br>
+<pre><code class='code-multiline'>const spawn = require('child_process').spawn;
+const script = `${__dirname}/timeout_task.sh`;
+const p = spawn(script, { detached: false, shell: true });
+
+p.stdout.on('data', (data) =&gt; {
+  // do something
+});
+
+p.stderr.on('data', (data) =&gt; {
+  // do something
+});
+
+p.on('exit', (err) =&gt; {
+  // do something
+});
+
+setTimeout(() =&gt; {
+  console.log(process.kill(-p.pid, 'SIGKILL'));
+}, 1000);</code></pre>
+<p><br></p>
+<p>你可以看到我们给 spawn 提供了这样的参数</p>
+<br>
+<pre><code class='code-multiline'>{
+  detached: true,
+  shell: true
+}</code></pre>
+<p><br></p>
+<p>第一参数是说我们希望我们要运行的进程成为一个独立的进程，而不是作为我们 Node 进程的子进程。然后在调用 process.kill() 的时候，我们提供的参数是 (-pid, signal)，其实也就是相当于</p>
+<br>
+<pre><code class='code-multiline'>  kill -- -&lt;pid&gt;</code></pre>
+<br>
+命令，也就是向同一个group下的所有进程发这个 signal。这样就可以确保我们运行的脚本及其子进程都能够接收到相应的signal。如果我们发的 signal 是 SIGKILL, 那么所有的子进程都将被杀掉。
+
+<h1>React项目中使用dagre-d3</h1>
+
+React 已经成为了公司所有项目的前端必选框架了, JavaScript 社区非常活跃，而 React 也几乎成为了前端最火热的框架，所以各种知名的库几乎都已经有了 React 的版本，比如 d3, 也有了了 <a href="https://github.com/esbullington/react-d3">react-d3</a>, 但是很可惜的是，还没有完全移植完成，还只能支持基本的几种形式，当然对于基础的 Web 应用也够用。可以偏偏有向无回路图 (Directed Acylic Graph) 还没有，那怎么办呢，同事说 <a href="https://github.com/apache/incubator-airflow">airflow</a> 使用了 <a href="https://github.com/cpettitt/dagre-d3">dagre-d3</a>，看了一下，使用起来很简单，效果也还不错，要不试试在 React 中试试吧。
+
+其实要在 React 项目中使用 dagre-d3 只需要这几步就够了.
+
+<ul><li>先绘制几个点
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  const dagGraph = new dagreD3.graphlib.Graph().setGraph({});
+  ['A', 'B', 'C'].forEach((name) =&gt; {
+    dagGraph.setNode(name, { label: name });
+  });
+  dagGraph.setEdge('A', 'B', {});</code></pre>
+<p><br></p>
+<ul><li>获取你的 DOM node
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  const svgDOMNode = ReactDOM.findDOMNode(this.refs.svg);
+  const svg = d3.select(svgDOMNode);
+  const inner = svg.append('g');</code></pre>
+<p><br></p>
+<p>我们的图当然要绘制在  上，但是为什么需要在  里面呢，后面你就知道奇妙之处了。</p>
+<br>
+<ul><li>render 到你的 DOM 上吧
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  const render = new dagreD3.render();
+  render(inner, dagGraph);</code></pre>
+<p><br></p>
+<p>由于有获取你真正的 DOM 节点，所以你需要将上面代码的执行放到 componentDidMount之后, 并且你应该这样。</p>
+<br>
+<pre><code class='code-multiline'> componentDidMount() {
+  setTimeout(() =&gt; {
+    // your above codes
+  }, 0);
+ }
+</code></pre>
+<p><br></p>
+<p>是不是看到你优美的 DAG 图了呀，可以怎么不能缩放呢，好吧，然我们来给我的 DAG 加上 zoom 支持吧。</p>
+<br>
+<ul><li>zoom 支持
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  const zoom = d3.behavior.zoom().on('zoom', () =&gt; {
+    this.autoLayoutDag();
+
+    const translateFunc = `translate(${d3.event.translate})`;
+    const scaleFunc = `scale(${d3.event.scale})`;
+    inner.attr('transform', `${translateFunc} ${scaleFunc}`);
+  });
+  svg.call(zoom);
+
+  const render = new dagreD3.render();
+  render(inner, graph);
+
+  const initialScale = 0.80;
+  const transXY = [(svg.attr('width') - graph.graph().width * initialScale) / 2, 20];
+  zoom.translate(transXY).scale(initialScale).event(svg);</code></pre>
+<p><br></p>
+<p>这就是如何在 React 项目中使用 dagre-d3 来绘制有向图。当然，其实其他还没有 React-ready 的库也同样可以自己摸索一下，基本上都可以很愉快在 React 中使用哦。</p>
+<br>
+<br>
+<h1>闲聊网页Responsive设计的一些小点</h1>
+<p>科技让我们的生活越来好玩了，信息的载体从原来的书信，报纸，书籍，扩散了电子邮件，社交站点，多媒体网页等，我们习惯了有时候静止的在自己的笔记本上工作，浏览信息，处理邮件，有时候移动的在自己的iPhone, iPhone完成这些事情。</p>
+<br>
+<p>然后信息，也就是文字，图片的元素在各种设备显示的效果就成为了前端工程师们最头疼的问题之一，如何在各种设备显示器都能良好的展示，就是传说中的 Responsive。</p>
+<br>
+<h2>media query</h2>
+<p>media query 真是一个好东西，简单的语法，好用的功能。</p>
+<br>
+<pre><code class='code-multiline'>@media &lt;media-query-list&gt; {
+  &lt;group-rule-body&gt;
+}</code></pre>
+<p><br></p>
+<p>简单来说，media query 是一个css样式覆写功能，当然信息展示的设备满足 media query 的条件时候，就使用增加 media query 大括号中的定义的那些css rules. 比如下面这段代码的意思是：在所有可视宽度小于等于 768px 的设备中使用大括号中的样式,也就是的字体大小变成24px。</p>
+<br>
+<pre><code class='code-multiline'>@media all and (max-width: 768px) {
+  p {
+    font-size: 24px;
+  }
+}</code></pre>
+<p><br></p>
+<p>常用的定义:</p>
+<br>
+<pre><code class='code-multiline'>@value small: (max-width: 599px);
+@value medium: (min-width: 600px) and (max-width: 959px);
+@value large: (min-width: 960px);</code></pre>
+<p><br></p>
+<p>media query 一共支持如下的media types: all, print, screen, speech. 但是并不是所有的浏览器实现了这些media types，比如此时 Firefox  就只支持了 all 和 screen 类别。 而 media query 支持的查询条件（media conditions）包括width, height, aspect-ratio, color, orientaion 等，可以到<a href="http://dev.w3.org/csswg/mediaqueries/#mq-features">w3网站</a>上查看.  有了media，很多时候你可以不用写两份 css 文件了。</p>
+<br>
+<h2>单位</h2>
+<p>单位真是的一个很头疼的问题，有的人喜欢用px，有的人倾向于em, 有的人狂热 rem，还有的人使用%. 大家都知道他们有这明显的区别，可以具体是什么呢。</p>
+<br>
+<ul><li>px
+</li></ul>
+<br>
+<p>px 是一个绝对单位，但是这里的绝对是相对于屏幕尺寸的绝对，所以不同屏幕尺寸下，设置成相同的px值，其实显示的大小也是不同的。 所以我们可以设置 meta 来保证px如我们想要的方式工作。</p>
+<br>
+<pre><code class='code-multiline'>&lt;meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,uer-scalabe=no"/&gt;</code></pre>
+<br>
+<ul><li>em
+</li></ul>
+<br>
+<p>em 是一个纯粹的相对单位，font-size 设置为 em 单位的时候表示他相对于父元素的大小，所以当一个元素的font-size改变的时候，各个使用了em的子元素都会进行相应大小变化。</p>
+<br>
+<ul><li>rem
+</li></ul>
+<br>
+<p>rem (root em) 是一个CSS3新增的一个相对单位，它和em的区别是，em相对的父元素的大小，而rem则是相对于根元素的大小。所以当根元素的大小发生变化的时候，所有使用rem的元素都会成比例的调整字体大小，避免了字体大小逐层复合的连锁效应。</p>
+<br>
+<ul><li>Viewport-Percentage
+</li></ul>
+<br>
+<p>视口比例长度定义了相对于视口的长度大小，这是文档的可见部分。 当视口的大小被修改（通过更改桌面计算机窗口大小或旋转手机或平板设备的方向）时，只有基于Gecko的浏览器才动态更新视口值。</p>
+<br>
+<pre><code class='code-multiline'>1vw = 1% of viewport width
+1vh = 1% of viewport height
+1vmin = 1vw or 1vh, whichever is smaller
+1vmax = 1vw or 1vh, whichever is larger
+
+h1 {
+  font-size: 5.9vw;
+}
+
+h2 {
+  font-size: 3.0vh;
+}
+p {
+  font-size: 2vmin;
+}</code></pre>
+<p><br></p>
+<p>然而使用哪一种单位并没有优劣之分，选择自己和团队认为合适的然后保持一致，我觉得就算是best practice了。</p>
+<br>
+<h2>工具</h2>
+<p>在进行前端开发的过程中，最麻烦的就是多宗设备调试了，没有趁手的设备和工具，调试前端来真是让人发疯啊，所以这里推荐两个工具，硬件和软件各一个。</p>
+<br>
+<ul><li>browser-sync
+</li></ul>
+<br>
+<p>这是一个多个设备同步的工具，使用起来超级简单，而且超级方便，是进行 Responsive 网页设计必不可少的工具。 可以两个命令就可以立即尝试：</p>
+<br>
+<pre><code class='code-multiline'>$ npm install -g browser-sync
+$ browser-sync start --server *.css</code></pre>
+<p><br></p>
+<p>如果你发现你其它设备访问不了你的网页时，你试试能不能 ping 通你的局域网 ip, 如果不能的话，90% 的可能性是你的本机防火墙挡住了所有的来访，所以你可以检查一下你的系统设定:</p>
+<br>
+<pre><code class='code-multiline'>System Preferences -&gt; Security & Privacy -&gt; Firewall -&gt; Firewall Options...</code></pre>
+<br>
+可以去他们官网了解更多： <a href="https://www.browsersync.io/">browser-sync</a>
+
+<h1>深入浅出Redux的异步Actions</h1>
+
+Redux 是一个超棒的 state 容器，它几乎已经成为了 React 前端项目的必备 state 管理库，当然 Redux 可以用于任何应用 JavaScript 应用中，让我们看看这个很棒的库的代码情况吧。
+
+<pre><code class='code-multiline'>	➜  src git:(master) ✗ pwd
+	/Users/ming/Codes/redux/src
+	➜  src git:(master) ✗ cloc .
+				 7 text files.
+				 7 unique files.
+				 0 files ignored.
+
+	http://cloc.sourceforge.net v 1.65  T=0.03 s (212.3 files/s, 18136.0 lines/s)
+	-------------------------------------------------------------------------------
+	Language                     files          blank        comment           code
+	-------------------------------------------------------------------------------
+	Javascript                       7             62            199            337
+	-------------------------------------------------------------------------------
+	SUM:                             7             62            199            337
+	-------------------------------------------------------------------------------</code></pre>
+<p><br></p>
+<p>这么棒的东西， 其实就几百行代码而已，不到两个小时你就几乎可以阅读完了，当然要深入理解其理念，还是需要一些时间的，让我们慢慢来。</p>
+<br>
+<h3>基本</h3>
+<br>
+<pre><code class='code-multiline'>import { createStore } from 'redux'
+
+function counter(state = 0, action) {
+  switch (action.type) {
+  case 'INCREMENT':
+    return state + 1
+  case 'DECREMENT':
+    return state - 1
+  default:
+    return state
+  }
+}
+
+let store = createStore(counter)
+
+store.subscribe(() =&gt;
+  console.log(store.getState())
+)
+store.dispatch({ type: 'INCREMENT' })
+// 1
+store.dispatch({ type: 'INCREMENT' })
+// 2
+store.dispatch({ type: 'DECREMENT' })</code></pre>
+<p><br></p>
+<p>这就是一个很完整的基于 Redux 的 JavaScript 应用了, 我们可以看到这是一个 Counter, 这个 Counter 可以进行 INCREMENT, DECREMENT 操作。 这不是就是简单的观察者模式吗，有人可能会说，是的，其实就是一个简单的观察者模式。还有一些有经验的工程师可能会说，这代码完全没有办法重用和拓展啊，别急，我们慢慢来。</p>
+<br>
+<p>让我们简单重构一下我们的代码吧:</p>
+<br>
+<p>reducer.js</p>
+<br>
+<pre><code class='code-multiline'>const initState = 0;
+
+export default function reducer(state = initState, action) {
+  switch (action.type) {
+  case 'INCREMENT':
+    return state + 1
+  case 'DECREMENT':
+    return state - 1
+  default:
+    return state
+  }
+}</code></pre>
+<p><br></p>
+<p>actions.js</p>
+<br>
+<pre><code class='code-multiline'>export function incr() {
+  return {
+    type: 'INCREMENT',
+  };
+}
+
+export function decr() {
+  return {
+    type: 'DECREMENT',
+  }
+}</code></pre>
+<p><br></p>
+<p>main.js</p>
+<br>
+<pre><code class='code-multiline'>import { createStore } from 'redux'
+
+let store = createStore(counter)
+store.subscribe(() =&gt;
+  console.log(store.getState())
+)
+store.dispatch({ type: 'INCREMENT' })
+// 1
+store.dispatch({ type: 'INCREMENT' })
+// 2
+store.dispatch({ type: 'DECREMENT' })
+</code></pre>这样是不是感觉熟悉了很多呢，很多时候，简单遵循一些原则，代码就好看很多，比如这里的单一责任原则(Single responsibility principle).
+
+从上面的代码可以看到，我们的 actions 全都是返回 plain object 的 function, 因为 store 只能 dispatch 纯的 Object, 而且携带这 type 属性。那么当我们有 actions 是的异步的怎么呢，比如我们有一个 ADD 的 action, 需要先去取到一个 value 然后才能进行添加操作，那么我们应该怎么做呢？
+
+<h3>异步 actions</h3>
+
+<pre><code class='code-multiline'>function add(value) {
+  return {
+    type: 'ADD',
+    value,
+  }
+}
+
+function fetchValue() {
+  return new Promise((resolve) =&gt; {
+    setTimeout(() =&gt; {
+      resolve(2)
+    }, 1000)
+  })
+}
+
+function asyncAdd() {
+  return function(dispatch) {
+    fetchValue().then((val) =&gt; {
+      dispatch(add(val))
+    });
+  }
+}
+</code></pre>
+<p><br></p>
+<p>可以看到，我们在 dispatch 这个 add action之前，需要先得到需要 add 的 value, 而这个 value 的获取是异步的。所以我需要 dispatch 的是 asyncAdd() 这个 action, 但是这个 action 返回不是一个 plain object, 而是一个 function, 那么我们怎么才能让 store 能够直接 dispatch 一个 function 呢，我们需要一个中间件。</p>
+<br>
+<p>Redux 提供了  redux-thunk  这个中间件来帮组我们做这件事情。</p>
+<br>
+<pre><code class='code-multiline'>import { createStore, applyMiddleware } from 'redux'
+
+const store = createStore(redux, applyMiddleware(thunk));
+store.dispatch(asyncAdd());</code></pre>
+<p><br></p>
+<p>可以看到我们 dispatch 了一个返回 function 的 action, 这个返回的 function 接收 dispatch 作为参数，在进行了异步操作之后, dispatch 一个 type 为了 ADD 的 action， 这个action 会被 reducer 捕捉然后更新 store. 一句话来总结 redux-thunk 的作用，那就是: 让 store 可以 dispatch 一个 function, 而不仅仅是 plain object.</p>
+<br>
+<p>对于简单的应用来, redux-thunk 也许可以完全胜任我们对于异步 action 的需求，但是它有着很明显的问题:</p>
+<br>
+<ul><li>actions 不在仅仅是一些返回 plain object 的function.
+</li><li>dispatch 散落在不同的地方
+</li><li>测试变得复杂
+</li></ul>
+<br>
+<p>是否可以有一种更友好进步的方式来管理异步 action 呢，所有 dispatch 出来的 action, 实际上都是广播形式，所有 store 的 listeners 都可以监听到，那么我们就可以让中间件去处理集中管理所有的异步操作, 等到特定结果的时候才 dispatch 相应的结果 action 出来，reducer 监听特定的 actions 去做 state 的更新操作, 这就是 redux-saga 这个第三方中间件的作用.</p>
+<br>
+<p>saga.js</p>
+<br>
+<pre><code class='code-multiline'>import { takeEvery } from 'redux-saga'
+import { put } from 'redux-saga/effects'
+
+function* addWorker() {
+  const value = yield call([fetchValue]);
+  yield put({ type: 'ADD_SUCCESS', value });
+}
+
+function* addWatcher() {
+  yield* takeEvery('ADD', addWorker);
+}
+
+export default addWatcher;</code></pre>
+<p><br></p>
+<p>main.js</p>
+<br>
+<pre><code class='code-multiline'>const sagaMiddleware = createSagaMiddleware();
+const store = createStore(reducer, applyMiddleware(sagaMiddleware));
+sagaMiddleware.run(addWatcher);</code></pre>
+<p><br></p>
+<p>这个代码，可以让我们处理逻辑就变得十分清晰.</p>
+<br>
+<ul><li>watcher 监听目标 actions, 然后分发到相应的 worker 去执行
+</li><li>worker 负责真正的异步操作，完成之后发布特定的 action 到 reducer
+</li><li>actions 全部都是 plain object
+</li></ul>
+<br>
+<p>而且我们的代码非常容易进行测试，actions 全是 plain object, 表征应用的行为，而 saga 负责异步调用, 其测试只需要测试 watcher 是否能正确监听 actions, 然后分发到正确的 worker, 而 worker 是否完成异步操作之后发布正确的 action.</p>
+<br>
+<p>当然这样做有一个不好的地方就是，所有的 action，都会同时被 saga 和 reducer 所监听，所以当你的 actions 设计不当，容易造成循环依赖。这个问题曾经在我的项目出现过一次，debug 起来较为麻烦, 所以在设计 actions 的时候一定要区分好那些 action 是 reducer 去 handle, 而那些 actions 是 saga 去 handle.</p>
+<br>
+<h3>测试</h3>
+<p>其实关于 redux-saga 的测试，估计很少有人写，因为其实用 redux-saga 的其实应该不多, 更多人应该用 redux-thunk， 但其实 redux-thunk 很多人也没有写测试吧, 让我们来看看如何优雅的写好 redux-saga 的单元测试吧。</p>
+<br>
+<pre><code class='code-multiline'>function constructExpectCallReturn(func, args) {
+  return (
+    {
+      '@@redux-saga/IO': true,
+      CALL: {
+        context: {
+          server: 'http://localhost:3000',
+          baseURL: 'http://localhost:3000/v1',
+        },
+        fn: func,
+        args,
+      },
+    }
+  );
+}
+
+describe('watcher', () =&gt; {
+  const action = { type: 'ADD' };
+
+  it('should take on ADD action ', () =&gt; {
+    actualYield = addWatcher.next().value;
+    expectedYield = take(ADD, addWorker);
+    expect(expectedYield).to.eql(actualYield);
+  });
+
+  it('should fork the saga handler with action', () =&gt; {
+    expectedYield = fork(addWorker, action);
+    actualYield = addWatcher.next(action).value;
+    expect(expectedYield).to.eql(actualYield);
+  });
+
+  it('should return to capturing the FETCH action again', () =&gt; {
+    actualYield = addWatcher.next().value;
+    expectedYield = take(ADD, addWorker);
+    expect(actualYield).to.eql(expectedYield);
+  });
+});
+
+describe('worker', () =&gt; {
+  it('should handle add', () =&gt; {
+    const action = { type: ADD };
+    const addIterator = addWorker(action);
+
+    expectedYield = constructExpectCallReturn(fetchValue, []);
+    actualYield = addIterator.next().value;
+    expect(expectedYield).to.eql(actualYield);
+  });
+});
+</code></pre>
+<p><br></p>
+<p>可以看到我们的代码完全是可测试, 而且责任分的十分清楚，模块化程度十分高。</p>
+<p>上面的代码都是在非 React 的应用中，可以看出我的初衷，也就是 Redux 其实适用于所有的 JavaScript 应用，当然在 React 中，更是缺之不可啊，当然用这些优秀工具的同时，我们更重要的是理解其中的理念，知道这样做，也要知道为什么需要这样做，这样我们才能在没有这些东西的时候，我们如何解构我们的代码，甚至是做出自己的类 Redux, 类 redux-thunk, redux-saga 的工具。</p>
+<br>
+<h1>听说你要开始写Python</h1>
+<p>听说你准备写 Python, 在你开始真正的 Python 生涯之前，你可以先问问你下面三个问题:</p>
+<br>
+<ul><li>你确定你要写 Python 吗
+</li><li>你确定你要写 Python 吗
+</li><li>你确定你要写 Python 吗
+</li></ul>
+<br>
+<p>如果你答案中有一点迟疑，那么请你出门左拐到隔壁的 Ruby，或者右拐到隔壁的 Node，或者笔直的往前走, 看看 Go, 也不满意的话，绕过旁边的 PHP, 走回老家，开始玩玩 Perl, 也是极好的。</p>
+<br>
+<p>当然如果你的答案是三个大大的 YES, ( 因为我靠写 Python 为生, 笔者就是这样的 ), 那么和我一起准备好成吨的痛苦的眼泪开始我们的第一个 Python 项目，通过这个简单的项目，也许我们能够开心的码 Python 代码了.</p>
+<br>
+<h3>基础环境</h3>
+<br>
+<ul><li>Python 版本管理
+</li></ul>
+<br>
+<p>和其他很多动态语言一样，多版本管理是天然需求了，Ruby 有 rvm, Node 有 nvm, 用脚趾头可能会猜 Python 的版本可能就是 pvm, 还真是不是，它叫 pyenv, 基本上和 rvm 和 nvm 差不多，你掌握下面这些知识，就可以安全的让你度过你 Python 生涯的第一阶段了</p>
+<br>
+<pre><code class='code-multiline'>brew install pyenv      # 安装
+pyenv install --list    # 看看可以安装那些包
+pyenv install 2.7.12    # 安装 python 2.7.12
+pyenv install 3.5.2     # 安装 python 3.5.2
+pyenv local 2.7.12      # 设置当前目录使用版本 2.7.12 的 Python
+pyenv global 3.5.2      # 设置当前目录使用版本 3.5.2 的 Python
+pyenv version           # 显示当前所使用的 Python</code></pre>
+<p><br></p>
+<ul><li>Python 包管理
+</li></ul>
+<br>
+<p>如果你之前是使用 Homebrew 安装了 Python，那么包管理工具 pip 应该已经安装好了，也可以这样安装 pip.</p>
+<br>
+<pre><code class='code-multiline'>curl https://bootstrap.pypa.io/ez_setup.py -o - | sudo python
+easy_install pip</code></pre>
+<p><br></p>
+<ul><li>包版本管理
+</li></ul>
+<br>
+<p>不像 Node 的 npm，npm 可以安装依赖到当前项目本地，不会产生和系统全局依赖版本冲突的问题, 而 Python 的 pip 是会检查系统是否已经存在了相关包，然后才会决定是否安装，而且是安装到全局目录上。为了解决这个问题, Python 社区出现了 virtualenv 这个工具，你可以这么使用它..</p>
+<br>
+<pre><code class='code-multiline'>pip install virtualenv    # 安装virtualenv
+virtualenv ENV            # 在当前项目中使用 virtualenv
+source ./ENV/bin/active   # 让它生效</code></pre>
+<p><br></p>
+<p>这样你就可以在当前目录中安装任何合适版本的依赖包了。</p>
+<br>
+<h3>开始写项目</h3>
+<br>
+<ul><li>package 和 module
+</li></ul>
+<br>
+<p>在开始写代码之前，Python 有两个概念你需要去了解一下, package 和 module. 在 Python 中，任何以 .py 结尾的文件都是一个 module, 而 package 则是那些则是 modules 的集合, 那些包含  init.py  的目录都是一个 package，package 下面可以有 subpackage.</p>
+<br>
+<pre><code class='code-multiline'>a
+├── __init__.py
+├── a.py
+└── b
+    ├── __init__.py
+    ├── b.py
+    └── c
+        ├── __init__.py
+        └── c.py
+</code></pre>
+<p><br></p>
+<p>上面这样的目录结构可以知道 package a 下面有 subpackge b, 而 package b 下面又有 subpackage c，我们可以这样去使用这些 packages</p>
+<br>
+<pre><code class='code-multiline'>import a
+from a import a
+from a.b import b
+from a.b.c import c
+</code></pre>当然更好的做法是在 init.py 中去定义我们需要 export 出来的 module, 比如我们可以:
+
+<pre><code class='code-multiline'>from a import a_say_hello
+from b import b_say_hello
+__all__ = ['a_say_hello', 'b_say_hello']</code></pre>
+<p><br></p>
+<p>然后你就可以这样去 import 需要的东西了</p>
+<br>
+<pre><code class='code-multiline'>  from a import a_say_hello, b_say_hello</code></pre>
+<br>
+<ul><li>项目目录结构
+</li></ul>
+<br>
+<p>无论你的项目是一个 Application 还是一个 Library, 都可以遵循下面的项目结构</p>
+<br>
+<pre><code class='code-multiline'>.
+├── README.md
+├── bin
+│   └── &lt;app&gt;
+├── &lt;package_name&gt; / &lt;app_name&gt;
+│   ├── __init__.py
+├── setup.py
+└── tests
+    ├──  test_a.py
+    ├──  test_b.py</code></pre>
+<p><br></p>
+<p>当然，一个简单的 README.md 是必不可少了，如果你需要发布的一个 Application, bin 目录下就是你的 Application 的可执行文件，也就是用户 pip install  之后可以直接运行的。而 <package_name> 目录下则是你的源代码目录，这下面你可以安装你的逻辑需求分拆成你需要的各种子目录，形成子模块。正如前面所说，你可以通过 init.py 来灵活的控制你的代码间依赖可见性。 tests 目录就是你的测试目录，测试是一种信仰，如果一个项目连测试都没有，怎么看出它是一个靠谱的项目呢。setup.py 则是项目的核心管理入口，相当 Node 项目的 package.json. 正确写好 setup.py 才能让我们的 Python 项目顺利的事半功倍完美开始。</p>
+<br>
+<ul><li>setup.py 入门
+</li></ul>
+<br>
+<p>其实不是 setup.py 入门，而是 setuptools 入门，通过 setuptools，我们才能愉快的做下面的事情:</p>
+<ol start="1"><li>定义要发布的包和模块
+</li><li>运行测试
+</li><li>项目安装
+</li><li>平台相关的信息定义
+</li><li>支持 Python 3
+</li></ol>
+<br>
+<p>首先当然需要安装一下 setuptools 这个库，如果你之前已经使用 ez_setu.py 了这个工具，那么 setuptools 这个库就已经安装好了。当然你可以像安装其他库一样安装 setuptools 就好了, 那么让我们来看看一个基础使用的 setup.py 大致是什么样的吧。</p>
+<br>
+<pre><code class='code-multiline'>from setuptools import setup, find_packages, Command
+import unittest, os
+
+class CleanCommand(Command):
+    """Custom clean command to tidy up the project root."""
+    user_options = []
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        os.system('rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info')
+
+def test_suite():
+    test_loader = unittest.TestLoader()
+    test_suite = test_loader.discover('tests', pattern='test_*.py')
+    return test_suite
+
+setup(
+    name = 'package-cleaner',
+    version = '0.0.5',
+    description = 'A artifactory packages cleaner',
+    packages = find_packages(),
+    test_suite = 'setup.test_suite',
+    scripts = ['bin/clean_package'],
+
+    author = 'Minghe Huang',
+    author_email = 'h.minghe@gmail.com',
+    install_requires = ['requests'],
+    url = 'http://&lt;project home page&gt;',
+
+    cmdclass = {
+        'clean': CleanCommand,
+    },
+)</code></pre>
+<p><br></p>
+<p>这个简单的 setup.py 不仅设置我们项目的基本信息，名字，版本，描述等，而且还定义了我们的项目依赖, 当然，你还可以看到我们拓展了一个命令: clean, 这样我们就可以很容易的清理掉 build 出来的中间文件了。有了这些定义之后，我们就可以轻易的做下面的事情了.</p>
+<br>
+<pre><code class='code-multiline'>python setup.py install       # 安装项目
+python setup.py build         # build项目，为发布做准备
+python setup.py test          # 跑测试
+python setup.py sdist upload  # 发布你的项目</code></pre>
+<p><br></p>
+<ul><li>如何写测试
+</li></ul>
+<br>
+<p>你可以使用 Pytest 来写测试，当然使用 Python 自带的 unittest 也基本上满足要求，看一个简单的例子，你就基本上知道怎么写测试了。</p>
+<br>
+<pre><code class='code-multiline'>import unittest
+
+from package_cleaner import PackageCleaner
+
+class TestPackageCleaner(unittest.TestCase):
+    def setUp(self):
+        self.server = 'https://repo.xxxx.com/artifactory'
+        self.cleaner = PackageCleaner(self.server)
+
+    def test_clean(self):
+        path = 'https://repo.xxxx.com/artifactory/api/storage/Solutions'
+        cleanable, reason = self.cleaner.is_cleanable(path)
+        self.assertEquals(cleanable, False)
+        self.assertEquals(reason, 'not consider develop branch')
+
+    @unittest.skip('not safe yet')
+    def test_romove(self):
+      """
+      blahbal
+      """
+
+if __name__ == '__main__':
+    unittest.main()</code></pre>
+<p><br></p>
+<p>unittest 提供一些基本的断言函数，通过这些基本的断言函数，基本上可以构造任意的断言了，可以通过 .skip 来略过一些 testcase, 当然还有其他的进阶功能，比如 testcase group 啊就不再多说了，文档很是齐全。</p>
+<br>
+<h3>最后</h3>
+<p>至此，你基本可以稍微轻松的写 Python 代码了，赶紧好好写一个牛逼的项目，让大家玩玩吧.</p>
+<br>
+<h1>细说Python的并发与并行</h1>
+<br>
+<p>让我们来完成一个简单的 [Artifactory]() 客户端来深入的熟悉一下 Python 的并行和并发吧。所以我们的需求是这样的: 我们的客户端可以遍历任何的路径，列举处这个目录下的所有文件, 而且尽量快的展示结果，好比如所说我们点击一个文件，要尽量的给我们展示其下面的文件一样，显然这里的性能瓶颈是获取子目录的时间消耗。对于 Artifactory 更是如此，因为每一次获取子目录都是一个 HTTP 请求，那么我们如何可以以最快的速度获取某个目录下面的所有文件呢?</p>
+<br>
+<h3>并行和并发</h3>
+<p>这个概念很多人都分不清，显然我自己也没法给处一个权威的解释，不过下面的两个 talk 可以听听，也许你可以了解到到底什么是并发 ( concurrency)，什么是并行(parallelism).</p>
+<br>
+<ul><li><a href="https://blog.golang.org/concurrency-is-not-parallelism">concurrency is not parallelism</a>
+</li><li><a href="https://www.amazon.cn/%E4%B8%83%E5%91%A8%E4%B8%83%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%9E%8B-%E5%B8%83%E5%BD%BB/dp/B00V4B2KEI/ref=sr_1_1?ie=UTF8&qid=1472529795&sr=8-1&keywords=%E4%B8%83%E5%91%A8%E4%B8%83%E5%B9%B6%E5%8F%91">七周七并发模型</a>
+</li></ul>
+<br>
+<p><a href="https://www.amazon.cn/Effective-Python-%E7%BC%96%E5%86%99%E9%AB%98%E8%B4%A8%E9%87%8FPython%E4%BB%A3%E7%A0%81%E7%9A%8459%E4%B8%AA%E6%9C%89%E6%95%88%E6%96%B9%E6%B3%95-%E5%B8%83%E9%9B%B7%E7%89%B9%C2%B7%E6%96%AF%E6%8B%89%E7%89%B9%E9%87%91/dp/B01ASI36QS/ref=sr_1_1?ie=UTF8&qid=1472529988&sr=8-1&keywords=effective+python">effective Python</a> 中是这么说的，并行和并发的关键区别，在于能不能提速(speedup), 某程序若是并行程序，其中有多条不同的执行路径都在平行的向前推进，则总任务的执行时间会减半，执行速度会变成普通程序的两倍，反之，如果该程序是并发程序，那么它即使可以使用看似平行的方式分别执行多条路径，也依然不会是总任务的执行速度得到提升。我对这种解释是不认可的。</p>
+<br>
+<p>我自己简单的理解是: 并发是设计，并行是程序的运行状态。所以才会有多种的并发模型，而这些模型的目的就是为了让程序过程达到并行的状态。</p>
+<br>
+<h3>设计一个高效的 Artifactory 客户端</h3>
+<p>任何树状模型的结构的遍历无非就是两种: 深度优先 (Depth-First-Search) 和 广度优先 (Breadth-First-Search), 对于二叉树来说，深度优先遍历还可以分为: 前序，中序，和后序遍历三种，区别就是根节点访问的顺序。对于目录的访问来说，显然是广度优先的算法，每次都是获取都是目录树某一层的所有节点, 根据 Artifactory 的 <a href="https://www.jfrog.com/confluence/display/RTF/Artifactory+REST+API">REST API</a>, 我们的节点访问可以是这样的.</p>
+<br>
+<pre><code class='code-multiline'>import requests
+
+def visit(node):
+  res = requests.get(node)
+  dict = res.json()
+  try:
+    return dict['children']
+  except KeyError:
+    return None</code></pre>
+<p><br></p>
+<ul><li>done comes first
+</li></ul>
+<br>
+<p>本着'done comes first'的原则，我们第一可以工作的 Artifactory 客户端是这样的</p>
+<br>
+<pre><code class='code-multiline'>class Client(object):
+  def tree(self, path):
+      def travel(path, items=[]):
+          children = self.get_children(path)
+          if stat.children:
+              for p in [stat.uri + c['uri'] for c in stat.children]:
+                  travel(p, items)
+          else:
+              items.append(path)
+
+      items = []
+      travel(path, items)
+      return items</code></pre>
+<p><br></p>
+<p>假设我们的目录是这样子:</p>
+<br>
+<pre><code class='code-multiline'>  -a
+    - a1
+      - a11
+      - a12
+      - a13
+    - a2
+      - a21
+      - a22
+      - a23</code></pre>
+<p><br></p>
+<p>当我们其实我们的 client.tree(a) 最后的得到的结果会是我们预想的:</p>
+<br>
+<pre><code class='code-multiline'>a/a1/a11
+a/a1/a12
+a/a1/a13
+a/a2/a21
+a/a2/a22
+a/a2/a23</code></pre>
+<p><br></p>
+<p>然而我们需要的时间是: T(a) + T(a1) + T(a2) + T(a11) + T(a12) + T(a13) + T(a21) + T(a22) + T(a23), T(n) 表示去获取节点 n 的时间，获取节点 n 的目的是为了检查其是否有子节点.</p>
+<br>
+<ul><li>优化一下
+</li></ul>
+<br>
+<p>稍微分析一下，在广度优先中，在同一级的节点中，比如 a1, a2，获取他们的子节点的时候，因为没有任何依赖，也就是可以并行进行的。那么我们是否可以用多线程去完成呢，答案是否定，原因是因为 Python 的多线程并不会真的并不会提高我们的任务时间利用率，因为 Python 的 GIL (Global Interpreter Lock), 这是一个 mutex，由于 CPython 的内存管理不是线程安全，所以这个 mutex 起到防止多个线程同时执行。所有当你在  Python 中使用多线程的时候，真实情况是这样的:</p>
+<br>
+<pre><code class='code-multiline'>thread-A - - - - - -
+thread-B  - - - - - -</code></pre>
+<p><br></p>
+<p>可以看出线程 A 和线程 B 在同一个时间单位里只有一个线程在运行，所以总的运行时间并不能减少。所以尝试使用多线程来做并行计算并不能达到我们的需求。那么拿到我们就没有办法加快我的程序了吗？</p>
+<br>
+<p>当然不是，多线程不行，那么为什么不用多进程呢? 所以我们的代码可以这样.</p>
+<br>
+<pre><code class='code-multiline'>def walk_tree(root, walk_func):
+    store = Store(root)
+
+    while not store.is_end():
+        pool = ProcessPoolExecutor(max_workers=8)
+        all_nodes = store.pollall()
+        for n in all_nodes:
+            store.visiting(n)
+
+        results = pool.map(walk_func, all_nodes)
+        for node, children in results:
+            store.visited(node)
+
+            if children:
+                for c in children:
+                    store.to_visit(c)
+            else:
+                store.done(node)
+
+    return store</code></pre>
+<p><br></p>
+<p>可以看到我们使用 ProcessPoolExecutor 来实现我们的多进程，这个来自与 concurrency.futures 这个模块 (Python 2, Python 3 它变成了 futures). 这个模块是对 multiprocessing 这个模块的封装，让我们可以很方便的进行多线程的管理。</p>
+<br>
+<p>这是一个通用的树状结构遍历方法，给它一个根节点，以及一个节点信息获取的方法，它就可以多进程的获取一棵树的所有节点了。</p>
+<br>
+<h3>show me the codes</h3>
+<p>这篇文章的完整思路都这个 Artifactory 客户端, 开源在 GitHub 上.</p>
+<br>
+<p><a href="https://github.com/metrue/artifactor">artifactor</a></p>
+<br>
+<h1>如何失败的做一个产品开发者</h1>
+<br>
+<blockquote>
+<p>来自一个虚构的真实案例</p>
+</blockquote>
+<br>
+<h3>语言还是底层一些好?</h3>
+<p>刚毕业出来工作的时候，觉得写底层老牛逼了，要不就去写写 C<i>C++ 吧，整天和指针，内存玩一块好像好高端的样子，总觉得 PHP, JavaScript 是不懂编程的人才用的玩具啊。 我可是 EE 出来的呀，不去写汇编，做板子已经很 low 了，写着写着发现，C</i>C++ 也好无聊，想做一点小事，字符串的处理就够你搞好一会儿，项目小还好，项目一大编译的时间可以去喝杯咖啡了，加上跑 Regression 的时间都可以去吃午饭了，而且时不时还来个  Segmentation Fault . 我的青春怎么能这么被浪费掉呢？</p>
+<br>
+<h3>为什么你爱装逼呢？</h3>
+<p>听说真正的黑客都用Perl(也不知道从那个傻逼哪里听说的，噢好像不是傻逼，是Steve Yegge吗，不对，他好像说的是 Lisp)，要不就去做作基础设施开发，build 一个棒棒的平台，控制着整个公司产品的开发，测试，发布，感觉好牛逼的样子呀。说干就干吧。用着写完了自己都看不懂的代码造了无数的内部轮子之后，兴高采烈发布了，发现压根没有人用，而且在传统软件公司做着基础设施开发好尴尬，产品研发团队，QA团队所有人都看你不爽，所有人都会和你抱怨, 就是因为你们基础设施团队瞎搞，流程搞来搞去的，工具换来换去，你们还要不要人干活了，而且还用着那么难看的 Perl, 想自己改改代码都要看大半天，真想一把火把你烧死。</p>
+<br>
+<p>后来你想，到底用什么语言可以既有 hacker 范儿，又简洁美观，既简单又复杂呢。那必须是 Ruby 啊，那高贵的红宝石才能配得上你的逼格啊。所以大步的跨入了 Ruby 的世界，刚刚被 Martz 魔怔一般的安利，一个不小心，又被 DHH 的洗脑营销，你按耐不住了，开始 Ruby on Rails 的旅程，觉得还是 Ruby on Rails 炫呀，那么优美简洁的语法，魔法一般的元编程，让人欲摆不能的不要不要的。搞了不一会，竟然弄出了一个像模像样的网站，突然间以为自己可以改变世界了，把网站往论坛一丢，漫天遍野的骂声一下子把自己的热情打到了哈尔滨的零下三十度。</p>
+<br>
+<h3>追潮流是好事吗？</h3>
+<p>没一会儿，Ruby on Rails 就 not cool anymore 了，前后端分离如一股清流，而 Node 火的不不要的，而且 Google 的 Angular 真是令人叹为观止的神作呢。要不是还是把 Rails 换了吧，MEAN( Mongo + Express + Angular) 才 cool 嘛，说换就咬立即换呀。然后项目还没有写完，就刮来了一道 <a href="https://github.com/expressjs/express/issues/2844">is express dying?</a> 的飓风，大家都开始转向 Koa 了，自己怎么能落后呢，不行不行，必须得转向 Koa 啊。哇，还真不错呢，Koa 的简洁一点都不比 Sinatra 差嘛，写着真是愉快呢。刷刷两三下，一个整洁的 API Server 就构造好了，开始愉快的 Angular 前端开发喽。</p>
+<br>
+<p>Boom, 快报快报，Facebook出了 React 啦，大家快用啊，特别简单的语法，virtual dom 很先进，在也不用理 Angular 那么复杂的 directive 了，配合着 Flux 用，爽的不要不要的呀。</p>
+<br>
+<pre><code class='code-multiline'>UI = f(State)</code></pre>
+<br>
+你看着公式，多么简单深刻的哲学呀，而且单向的数据流那么好控制，换换换，必须得换。发发 actions, 加几段 jsx 代码，一个棒棒的页面就出来了，好棒呀，你露出了满意的浅笑。
+
+什么，你还在用 Flux, 好落伍呀，Redux 都已经主流了那么久了，你是博物馆馆长嘛，你的小伙伴和你说，作为一个风一样的男子，跟风是你的属性啊，你怎么能忍受这般羞辱呢，刚回到，你就打开 Vim，打开 package.json，完美的把 Redux 圆满的放进去了，调整了一晚上的代码，git push 了之后，不知不觉，天亮了，你安静的睡了两个小时。
+
+来到公司，同事不小心瞄了一眼的屏幕。大声的说，什么，你还在用 redux-thunk 来管理异步action，真实土鳖啊。同事的声音很大，所有的目光都刷刷的聚集到你的身上，你感觉无比屈辱啊，你忍住泪水，轻描淡写的说，我是在确认 redux-thunk 的一个bug，打算给他们发 PR 呢。在同事离开了之后，你马不停蹄的开始代码迁移，终于你的项目技术栈变成这样了:
+
+<pre><code class='code-multiline'>后端: Koa, Mongo
+前端: React(Redux/Redux-Saga)
+移动端: Objective C</code></pre>
+<p><br></p>
+<p>似乎你可以喘一口气了。</p>
+<br>
+<p>万万没有想到，Facebook又投了一个重磅炸弹，React Native 横空出世了，而且相继支持 iOS和 Android，你已经错过了成为了 Swift 的第一批尝鲜者，这个时候，你再也按耐不住了，立即开始投入了 React Native 的怀抱，终于在也不用看到 Objective C 那丑陋的语法了，而且你严格遵循着社区的最佳实践，<a href="https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0">Presentational  and Container Components</a> 完美分开，web 前端和移动端代码复用特别爽，你暗暗的自豪了起来。</p>
+<br>
+<p>然后又朋友听说你在做一款产品，准备同时做 Android 和 iOS 版，为什么不也把桌面版也做了呢，Github 的 electron 那么赞，有了 web 前端，几乎不要改什么代码就可以完成一个很棒的桌面应用呀，必须要上啊。最终你的技术栈变成了</p>
+<br>
+<pre><code class='code-multiline'>后端: Koa, Mongo
+前端: React(Redux/Redux-Saga)
+Android/iOS: React Native
+桌面: Electron</code></pre>
+<p><br></p>
+<h3>结局</h3>
+<p>你终于开始安心的写代码做产品了。然有而突然有人告诉你，其实现在 Vue 比 React 还要轻量级优雅，你开始惆怅了，心里泛起了一点点涟漪: 要不要试试看呢。</p>
+<br>
+<p>然后你的产品在 Github 躺了好久了, 却，依然没有完成。</p>
+<br>
+<h1>基于Docker的无痛部署</h1>
+<br>
+<p>作为一个全栈(全沾)工程师，你一个人负责着产品的方方面面，从前端的切图，到后端的数据库，你无所不惧，无所不能，可是日理万机的你，日以继夜的做出一个优秀的产品了之后，终于要生产环境部署服务，然后准备向用户开放了，可是你却开始开始犯难了，怎么才能够无痛持续部署呢？其实任何程序的运行都是基于特定环境，那么只要保证环境稳定，那么程序正常运行的基础才能保证。而且环境稳定的最佳保证方式我觉得是环境独立，而保证环境独立的最佳方式当然是容器技术了，这篇文章我将介绍我自己怎么实用 Docker 进行无痛部署的。</p>
+<br>
+<h3>准备条件</h3>
+<p>本文针对的场景是: 个人或者小团队正在开发一个小产品。这样的场景下假设我们是没有使用任何的 CI, CD 服务，比如 Jenkins, Bamboo 等工具的。我所拥有的就是我的开发本(一台Mac, 或者 *nix 机器), 一台等待部署的生产环境云主机. 就这么简单.</p>
+<br>
+<ul><li>开发环境的 Docker 环境配置
+</li></ul>
+<br>
+<p>现在 Docker 已经了 Mac 版的，详细的安装方式可以参考这篇官方文档。 <a href="https://docs.docker.com/docker-for-mac/">docker for mac</a>, 安装好了启动好了。简单检查一下你的 Docker 是否安装妥当。</p>
+<br>
+<pre><code class='code-multiline'>$ docker info # 看看整体信息
+
+$ docker --version
+
+$ docker-compose --version
+
+$ docker-machine --version</code></pre>
+<p><br></p>
+<h3>项目分解</h3>
+<p>我们的产品终于开发好了，假设我们很好的对我们的产品进行了基于服务的结构分离，我们的整个产品 break down 成为了下面的几个部分:</p>
+<br>
+<ul><li>Mongo 数据库
+</li><li>API Server 后端API
+</li><li>前端
+</li></ul>
+<br>
+<p>基于这样的架构，我们需要的部署的服务将是这样的:</p>
+<br>
+<ul><li>Mongo
+</li><li>API Server
+</li><li>Nginx
+</li></ul>
+<br>
+<p>这三者分别作为独立的服务以 Docker Container 的形式存在，其中 Mongo 作为数据库服务，API Server 显然是承担着后端 API 服务，Nginx 负责 Proxy 网站前端以及 API Server, 也就是 Nginx 基于 location 或者 server_name 来决定应该转发到我们的 Web 前端还是后端 API Server. 所以我们的 nginx.conf 可能是这样的:</p>
+<br>
+<pre><code class='code-multiline'>user nginx;
+worker_processes auto;
+pid /run/nginx.pid;
+
+events {
+	worker_connections 768;
+}
+
+http {
+	sendfile on;
+	tcp_nopush on;
+	tcp_nodelay on;
+	keepalive_timeout 65;
+	types_hash_max_size 2048;
+
+	include /etc/nginx/mime.types;
+	default_type application/octet-stream;
+
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2; # Dropping SSLv3, ref: POODLE
+	ssl_prefer_server_ciphers on;
+
+	access_log /var/log/nginx/access.log;
+	error_log /var/log/nginx/error.log;
+
+	gzip on;
+	gzip_disable "msie6";
+
+  server {
+    listen 80;
+
+    location / {
+      root /opt/sira/web/public;
+    }
+
+    location /v1/api {
+      proxy_pass http://api:5001;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection 'upgrade';
+      proxy_set_header Host $host;
+      proxy_cache_bypass $http_upgrade;
+    }
+  }
+}</code></pre>
+<p><br></p>
+<p>如果我们是用 server_name 来控制的，那么 server section 可能是这样的。</p>
+<br>
+<pre><code class='code-multiline'>server {
+    listen 80;
+    server_name example.com;
+}
+
+server {
+    listen 80;
+    server_name api.example.com;
+}
+</code></pre>
+<p><br></p>
+<h3>准备 dockerfile</h3>
+<p>dockerfile 的最佳文档当然是官方文档了,<a href="https://docs.docker.com/engine/reference/builder/">docker file</a>，当然如果你的技术栈和我的差不多的话: Mongo + Koa + React，全都是 ES6 的话，你可以参考我的dockerfile.</p>
+<br>
+<ul><li>Mongo 的dockerfile
+</li></ul>
+<br>
+<pre><code class='code-multiline'>FROM mongo</code></pre>
+<br>
+Mongo 的 dockerfile 其实什么也没有做，就是基于官方的 Mongo 镜像而已，独立写一份只是为了后面的拓展方便.
+
+<ul><li>API Server 的dockerfile
+</li></ul>
+<br>
+<pre><code class='code-multiline'>FROM alpine:3.4
+
+RUN apk add --update nodejs
+RUN apk add --update python
+RUN apk add --update make
+RUN apk add --update gcc
+RUN apk add --update g++
+
+RUN mkdir -p /opt/laivei-server
+WORKDIR /opt/laivei-server
+ADD server .
+
+# Fix bug https://github.com/npm/npm/issues/9863
+RUN cd $(npm root -g)/npm \
+ && npm install fs-extra \
+  && sed -i -e s/graceful-fs/fs-extra/ -e s/fs\.rename/fs.move/ ./lib/utils/rename.js
+
+RUN npm install
+RUN npm run transpile
+
+EXPOSE 5001
+
+CMD ["npm", "run", "start"]</code></pre>
+<p><br></p>
+<p>API Server 的 dockerfile 基于的是 alpine 这个超轻量级的 linux, 然后编译运行我们的服务,并且暴露出特定端口.</p>
+<br>
+<ul><li>Nginx 的dockerfile
+</li></ul>
+<br>
+<pre><code class='code-multiline'>FROM nginx:alpine
+COPY devops/nginx.conf /etc/nginx/nginx.conf
+
+RUN apk add --update nodejs
+RUN apk add --update python
+RUN apk add --update make
+RUN apk add --update gcc
+RUN apk add --update g++
+
+RUN mkdir -p /opt/sira/web
+WORKDIR /opt/sira/web
+COPY web .
+
+RUN npm install
+RUN npm run build
+
+EXPOSE 80</code></pre>
+<p><br></p>
+<p>Nginx 这个docker file 做了两件事情，设置 nginx.conf，然后编译前端。当然我们也可以把编译前端的这一部分工作放到单独的服务里面去做。至此，我们的整个产品的 docker 化就算完成了. 你可以验证你的 dockerfile 是否已经准备妥当了.</p>
+<br>
+<pre><code class='code-multiline'>docker build -f devops/dockerfile.mongo .
+docker run &lt;image&gt;
+</code></pre>其他的服务类似.
+
+<h3>docker-compose</h3>
+至此呢，我们已经完成了所有的 dockerfile 了， 当然我们可以每一个服务都单独去运行，但是有一种更好的方式去组织我们的整个产品: <a href="https://docs.docker.com/compose/">Docker Compose</a>. docker-compose 做两件事情:
+
+<ul><li>定义整个产品的构成，也就是有哪些 container 来组成
+</li><li>运行整个产品
+</li></ul>
+<br>
+<p>docker-compose 的输入是 docker-compose.yml 文件, 假设我们的产品代码的目录结构是这样子的:</p>
+<br>
+<pre><code class='code-multiline'>$ ls
+drwxr-xr-x crawler
+drwxr-xr-x devops
+drwxr-xr-x server
+drwxr-xr-x web</code></pre>
+<p><br></p>
+<p>基于我们的产品架构，我们的 compose file 是这样子的.</p>
+<br>
+<pre><code class='code-multiline'>version: '2'
+services:
+  mongo:
+    build:
+      context: ..
+      dockerfile: devops/dockerfile.mongo
+    volumes:
+      - /data/sira/db:/data/db
+  api:
+    build:
+      context: ..
+      dockerfile: devops/dockerfile.server
+    ports:
+      - '5001:5001'
+    depends_on:
+      - mongo
+    links:
+      - mongo
+  nginx:
+    build:
+      context: ..
+      dockerfile: devops/dockerfile.nginx
+    ports:
+      - '80:80'
+    depends_on:
+      - api
+    links:
+      - api</code></pre>
+<p><br></p>
+<p>由此你可以大致了解到，我们可以在 compose file 中定义整个产品的各个组成部分的依赖逻辑，定义各个服务的构建信息，各个服务所需的 volumns, ports 等等。当然能做的还有更多，你可以参考这个这个官方文档: <a href="https://docs.docker.com/compose/compose-file/">compose file</a>.</p>
+<br>
+<h3>一键部署</h3>
+<p>到此，我们整个产品就已经完成了 docker-based 的部署方案了，敲下一下命令，然后愉快的访问你的网站把.</p>
+<br>
+<pre><code class='code-multiline'>docker-compose -f devops/compose.yml build && docker-compose -f devops/compose.yml up -d</code></pre>
+<br>
+当然，在实际实践中，我们可以写一个简单的部署脚本，然后准备一个简单的Makefile:
+
+<pre><code class='code-multiline'>#!/bin/bash
+
+env=$1
+
+dev_host='root@106.185.xxx.yyy'
+prod_host='root@139.162.aaa.bbb'
+
+target_host=$dev_host
+if [[ $env = "prod" ]];then
+  target_host=$prod_host
+fi
+
+ssh ${target_host} &lt;&lt;END
+  docker rmi \$(docker images --filter "dangling=true" -q --no-trunc)
+  rm -rf /tmp/Sira
+  git clone git@github.com:metrue/Sira.git /tmp/Sira
+  cd /tmp/Sira
+  docker-compose -f devops/compose.yml down
+  docker-compose -f devops/compose.yml build && docker-compose -f devops/compose.yml up -d
+END</code></pre>
+<p><br></p>
+<pre><code class='code-multiline'># Makefile
+
+deploy-dev:
+	devops/deploy.sh dev
+deploy-prod:
+	devops/deploy.sh prod</code></pre>
+<p><br></p>
+<p>你可以看到我们将生产环境和开发环境进行了分离，而且每一次的部署都经历三步:</p>
+<br>
+<ul><li>删掉无用的旧 docker images
+</li><li>重新clone代码做clean build
+</li><li>停止之前的services
+</li><li>最后build各项服务，而且启动
+</li></ul>
+<br>
+<p>这其实就是一个很小但是五脏俱全的pipeline了，这样我们就可以在本地的部署了</p>
+<br>
+<pre><code class='code-multiline'>make deploy-dev   # 部署到 dev 环境
+make deploy-prod  # 部署到 prod 环境</code></pre>
+<p><br></p>
+<h1>用开源工具构建一个类Dash工具</h1>
+<br>
+<blockquote>
+<p>dash 是一个好的工具，去买正版支持一下作者吧。</p>
+</blockquote>
+<br>
+<p>不过有的人呢，就是想要做一个自己的文档查阅工具。然而从零开始做一个Dash，当然是很不容易的，不过感谢开源社区，我们组装几个开源工具就可以实现一个我们自己的类 Dash 文档工具。然我们一步步来吧。</p>
+<br>
+<h3>你需要这些工具</h3>
+<br>
+<ul><li><a href="https://github.com/jiahaog/nativefier">nativefier</a>
+</li></ul>
+<br>
+<p>全局安装 <a href="https://github.com/jiahaog/nativefier">nativefier</a></p>
+<pre><code class='code-multiline'>npm install nativefier -g</code></pre>
+<br>
+<ul><li><a href="http://devdocs.io/">devdocs.io</a>
+</li></ul>
+<br>
+<p>DevDocs 是一个 API 查阅的网站，它是基于 <a href="https://github.com/sinatra/sinatra">Sinatra</a> 的一个应用. 是一个纯正的基于 Ruby 技术的开源网站, Web 其实已经非常好用了，支持键盘快捷键，而且支持模糊匹配，当然更棒的一定是它支持<a href="http://devdocs.io/offline">离线模式</a>.</p>
+<br>
+<h3>一键组装</h3>
+<br>
+<pre><code class='code-multiline'>nativefier 'http://devdocs.io/'</code></pre>
+<br>
+或者你想要创建一个带有独特图标的应用,而且命名为 MyOwnDash
+
+<pre><code class='code-multiline'>nativefier 'http://devdocs.io/' --icon &lt;你的图标路径.icns&gt; --name 'MyOwnDash'</code></pre>
+<br>
+<h1>Style in JS</h1>
+
+<h3>CSS Modules 是什么</h3>
+原生 css 写起来是让人泄气的, 因为 css 的编程能力太弱了。没有灵活的编程能力，css 的模块化就是面临很多问题。所以有的人使用 JavaScript 来写样式，这样就是使得样式的编写和其它 JavaScript 代码一样，具备灵活性和容易模块化。但是这种方式对于伪类却显得很乏力。
+
+在出现 React 之前，人们某种程度上已经满足于 Sass<i>Less 预处理器带来的便捷。但是当 React 出现之后, JavaScript, HTML, CSS 又奇迹般的睡在了一起，JSX 给开发者带来了一致的代码写作体验，但是使用 JavaScript 的 Object 来定义样式，灵活和模块化都做到了，然后伪类还是很繁复，甚至需要监听鼠标时间来改变组件 state 中的伪类标记来引入不同的样式。而且在 JavaScript 代码中直接定义样式，对于工程师来说当然是喜闻乐见，但是对于设计师</i>UI来说，可不是很好玩。
+
+那么有没有一种方案，能够使用原生的 CSS 来写样式，又富有灵活性和优良的模块化呢？ 答案就是 <a href="https://github.com/css-modules/css-modules">css-modules</a>.   它具备三个杀手锏的特性: 模块化, 无污染以及清晰显式的组合.  三个示例你就是基本上了解了其灵活的用法。
+
+<ul><li>局部样式
+</li></ul>
+<br>
+<pre><code class='code-multiline'>.className {
+  color: green;
+}
+
+// 或者
+
+:local(.className) {
+  color: green;
+}</code></pre>
+<p><br></p>
+<ul><li>全局样式
+</li></ul>
+<br>
+<pre><code class='code-multiline'>:global(.className) {
+  color: green;
+}</code></pre>
+<p><br></p>
+<ul><li>组合 (compose)
+</li></ul>
+<br>
+<pre><code class='code-multiline'>.baseReadOnlyInputStyle {
+  outline: none;
+  box-shadow: inset 0px 0px 0px 0px red;
+  word-break: break-word;
+  display: inline;
+  width: 80%;
+  min-width: 48px ;
+  cursor: text;
+}
+
+.onHoverInputStyle:hover {
+  text-decoration-style: dashed;
+}
+
+.inputDisabled {
+  composes: baseReadOnlyInputStyle onHoverInputStyle;
+}</code></pre>
+<p><br></p>
+<p>上面的三点基本上就解决了传统的 CSS 的大多数问题。 使用原生 CSS 写样式，通过 JavaScript 来管理样式的注入，这就是 <a href="https://github.com/css-modules/css-modules">css-modules</a> 深得人心的原因。配合 React 使用的体验是超级爽, 只要在你的 webpack 配置文件中添加下面几行即可:</p>
+<br>
+<pre><code class='code-multiline'>{
+  test: /\.css$/,
+  loader: 'css-loader?modules&importLoaders=1&localIdentName=[name]__[local]___[hash:base64:5]',
+}</code></pre>
+<p><br></p>
+<h3>炫酷的特性</h3>
+<br>
+<ul><li>类
+</li></ul>
+<br>
+<p>styles.css</p>
+<pre><code class='code-multiline'>.title {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.email {
+  padding: .5rem;
+}
+
+.submitButton {
+  padding: .5rem;
+  margin-top: .5rem;
+  border: 1px solid #2F79AD;
+  border-radius: 4px;
+  background-color: #6DB9EE;
+}
+
+.submitButton:hover {
+  background-color: #2F79AD;
+}</code></pre>
+<p><br></p>
+<p>app.jsx</p>
+<pre><code class='code-multiline'>import React from 'react';
+import styles from './styles.css';
+
+class Signup extends React.Component {
+  render() {
+    return (
+      &lt;div&gt;
+        &lt;h2 className={styles.title}&gt;
+          Email gc
+        &lt;/h2&gt;
+        &lt;input className={styles.email} placeholder="Email Please"/&gt;
+        &lt;br/&gt;
+        &lt;button className={styles.submitButton}&gt;
+          Submit
+        &lt;/button&gt;
+      &lt;/div&gt;
+    );
+  }
+}
+export default Signup;</code></pre>
+<p><br></p>
+<ul><li>包含类
+</li></ul>
+<br>
+<p>styles.css</p>
+<pre><code class='code-multiline'>.button {
+  padding: .5rem;
+  margin-top: .5rem;
+  border: 1px solid #2F79AD;
+  border-radius: 4px;
+  background-color: #6DB9EE;
+}
+
+.fun .button {
+  font-weight: bold;
+  background: linear-gradient(
+    90deg,
+    #ff0000, #ffff00,
+    #00ff00, #00ffff,
+    #ff00ff, #ff0000
+  );
+}</code></pre>
+<p><br></p>
+<p>app.jsx</p>
+<pre><code class='code-multiline'>import React from 'react';
+import styles from './styles.css';
+
+class ButtonGroup extends React.Component {
+  render() {
+    return (
+      &lt;div&gt;
+        &lt;button className={styles.button}&gt;
+        Regular Button
+        &lt;/button&gt;
+        &lt;br/&gt;
+        &lt;div className={styles.fun}&gt;
+          &lt;button className={styles.button}&gt;
+            FUN BUTTON
+          &lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    );
+  }
+}
+export default ButtonGroup;</code></pre>
+<p><br></p>
+<ul><li>组合
+</li></ul>
+<br>
+<p>utils.css</p>
+<pre><code class='code-multiline'>/* grapes are round and purple */
+.grape {
+  border: 2px solid #ff00ff;
+  border-radius: 10px;
+  background-color: purple;
+  color: white;
+}
+
+.grape:hover {
+  background-color: #ff00ff;
+}</code></pre>
+<p><br></p>
+<p>styles.css</p>
+<pre><code class='code-multiline'>.button {
+  composes: grape from './utils.css';
+  padding: .5rem;
+  margin-top: .5rem;
+}</code></pre>
+<p><br></p>
+<p>app.jsx</p>
+<pre><code class='code-multiline'>import React from 'react';
+import styles from './styles.css';
+
+class NiceButton extends React.Component {
+  render() {
+    return (
+      &lt;button className={styles.button}&gt;
+        Button
+      &lt;/button&gt;
+    );
+  }
+}
+export default NiceButton;</code></pre>
+<p><br></p>
+<ul><li>标签
+</li></ul>
+<br>
+<p>style.css</p>
+<pre><code class='code-multiline'>input.large {
+  font-size: 20px;
+}
+
+.medium input {
+  font-size: 14px;
+}
+
+.tiny * {
+  font-size: 9px;
+}</code></pre>
+<p><br></p>
+<p>app.jsx</p>
+<pre><code class='code-multiline'>import React from 'react';
+import styles from './styles.css';
+
+class InputGroup extends React.Component {
+  render() {
+    return (
+      &lt;div&gt;
+        &lt;input className={styles.large} placeholder="I am large" /&gt;
+        &lt;div className={styles.medium}&gt;
+          &lt;input placeholder="I am medium" /&gt;
+        &lt;/div&gt;
+        &lt;div className={styles.tiny}&gt;
+          &lt;input placeholder="I am so tiny" /&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    );
+  }
+}
+export default InputGroup;</code></pre>
+<p><br></p>
+<ul><li>media query
+</li></ul>
+<br>
+<p>styles.css</p>
+<pre><code class='code-multiline'>.small {
+  opacity: 0.2;
+}
+.large {
+  opacity: 1.0;
+}
+
+@media (max-width: 600px) {
+  .small {
+    opacity: 1.0;
+  }
+  .large {
+    opacity: 0.2;
+  }
+}</code></pre>
+<p><br></p>
+<p>app.jsx</p>
+<pre><code class='code-multiline'>import React from 'react';
+import styles from './styles.css';
+
+class WindowGroup extends React.Component {
+  render() {
+    return (
+      &lt;div&gt;
+        &lt;div className={styles.small}&gt;
+          The Window is Small
+        &lt;/div&gt;
+        &lt;div className={styles.large}&gt;
+          The Window is Big
+        &lt;/div&gt;
+      &lt;/div&gt;
+    );
+  }
+}
+export default WindowGroup;</code></pre>
+<p><br></p>
+<h3>拓展阅读</h3>
+<ul><li><a href="http://blog.vjeux.com/2014/javascript/react-css-in-js-nationjs.html">React: CSS in your JS by Christopher Chedeau</a>
+</li><li><a href="https://github.com/css-modules/css-modules/tree/master/docs">css-modules docs</a>
+</li><li><a href="https://github.com/camsong/blog/issues/5">CSS Modules 详解及 React 中实践</a>
+</li></ul>
+<br>
+<h1>用代码来浅说CORS那些事儿</h1>
+<br>
+<h2>引言</h2>
+<p>CORS 的全称是 Cross-Origin Resource Sharing, 翻译过来就是跨域资源共享。简单来说就是一个资源发起一个跨域 (不同域名或者不同端口) 的HTTP 请求来获取资源, 具体的定义详见 <a href="https://www.w3.org/TR/cors/">w3c 的标准</a>.</p>
+<br>
+<p>出于安全考虑，浏览器会限制脚本中发起的跨域请求。比如，使用 XMLHttpRequest 和 Fetch 发起的 HTTP 请求必须遵循同源策略。但是为提升 Web 应用的可用性，浏览器必须支持跨域请求。那么如何对跨域的请求做访问控制呢，就是通过 CORS 机制来控制的。 CORS 需要客户端和服务器同时支持。目前，所有浏览器都支持该机制。而服务端的支持则有开发来进行控制实现。</p>
+<br>
+<h2>浅说</h2>
+<p>我们都知道客户端向服务端发送的 Request 以及服务端向客户端返回的 Response 都携带这 HTTP头，HTTP 消息头用来准确描述正在获取的资源、服务器或者客户端的行为. 而 CORS 也正是通过  HTTP Request 和 Response 的消息头来完成控制的。</p>
+<br>
+<p>首先了解一下 HTTP 消息头的下面这个几个域:</p>
+<br>
+<ul><li>Origin: 首部字段表明预检请求或实际请求的源站。
+</li><li>Access-Control-Allow-Credentials: 首部字段用于预检请求的响应，表明服务器是否允许 credentials 标志设置为 true 的请求。
+</li><li>Access-Control-Allow-Origin: 指定了允许访问该资源的外域 URI。对于不需要携带身份凭证的请求，服务器可以指定该字段的值为通配符，表示允许来自所有域的请求。
+</li></ul>
+<br>
+<p>而常见的跨域请求会有下面几种场景:</p>
+<br>
+<ul><li>简单的跨域请求
+</li></ul>
+<br>
+<p>比如 <a href="http://www.a.com">www.a.com</a> 请求 <a href="http://www.b.com">www.b.com</a> 的资源。使用下面的 HTTP 方法: GET, HEAD, 或者 POST. 而且请求的 Content-Type 属于下面几种之一: application<i>x-www-form-urlencoded, multipart</i>form-data, text/plain.</p>
+<br>
+<ul><li>预检请求
+</li></ul>
+<br>
+<p>同样是 <a href="http://wwww.a.com">wwww.a.com</a> 请求 <a href="http://www.b.com">www.b.com</a> 的资源，但是如果使用了这些方法: PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH 或者请求的 Content-Type 不属于application<i>x-www-form-urlencoded, multipart</i>form-data, text/plain 之一。预检的请求要求必须首先使用 OPTIONS 方法发起一个预检请求到服务器，以获知服务器是否允许该实际请求。"预检请求"的使用，可以避免跨域请求对服务器的用户数据产生未预期的影响。</p>
+<br>
+<ul><li>携带 credentials 的请求
+</li></ul>
+<br>
+<p>对于跨域 XMLHttpRequest 或 Fetch 请求，浏览器不会发送身份凭证信息，如果要在请求中携带身份信息比如 Cookie, 则需要设置 XMLHttpRequest 的某个特殊标志位 (withCredentials), 如果服务器端的响应中未携带 Access-Control-Allow-Credentials: true ，浏览器将不会把响应内容返回给请求的发送者。</p>
+<br>
+<h2>代码呢？</h2>
+<p>让我们基于 Koa (服务端) 和 fetch (客户端) 用代码来描述上面的场景吧, 你也可以在我最近的开源项目(<a href="https://github.com/metrue/YoYo">YoYo</a>，一个基于 Koa 和 React 的评论服务) 看到在生产环境如果实现 CORS 的.</p>
+<br>
+<ul><li>简单的跨域请求支持
+</li></ul>
+<br>
+<pre><code class='code-multiline'>import Koa from 'koa'
+import cors from 'koa-cors'
+
+const app = new Koa()
+app.use(cors({ origin: '*' }))</code></pre>
+<p><br></p>
+<p>在客户端直接调用 fetch 即可访问服务端资源</p>
+<br>
+<pre><code class='code-multiline'>fetch(url, { method: 'GET', ... })</code></pre>
+<br>
+<ul><li>携带 credentials 的跨域请求
+</li></ul>
+<br>
+<pre><code class='code-multiline'>import Koa from 'koa'
+import cors from 'koa-cors'
+
+const app = new Koa()
+app.use(cors({
+  origin: 'YourOrigin',
+  credentials: true,
+}))</code></pre>
+<p><br></p>
+<p>这样写导致的结果是，只有 'YourOrigin' 这个域的请求能够访问到服务端域的资源，有没有更灵活的方法呢，有的，可以这样:</p>
+<br>
+<pre><code class='code-multiline'>import Koa from 'koa'
+import cors from 'koa-cors'
+
+const app = new Koa()
+const options = {
+  origin: (ctx) =&gt; {
+    const origin = ctx.headers.origin
+    const whiteList = ['https://a.com', 'https://b.com']
+    //
+    // if request with credentials, origin cannot be '*',
+    // origin should be exactly the request origin
+    //
+    if (whiteList.indexOf(origin) &gt; -1) {
+      return origin
+    }
+    return '*'
+  },
+  credentials: true,
+}
+app.use(cors(options))
+</code></pre>这样就可以达到，白名单里面的域名的请求可以携带 credential 而正确接受到资源，而其它域名的请求则属于变成简单跨域请求。
+
+而客户端则可以这样发起请求:
+
+<pre><code class='code-multiline'>fetch(url, {
+  method: 'POST',
+  credentials: 'include',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})</code></pre>
+<p><br></p>
+<h2>最后</h2>
+<p>如果你要自己做一些实验的话，搭建一个简单的 HTTP Server 然后打开浏览器就可以了，如果你在用 Koa 的话，有两个个小窍门可以参考:</p>
+<br>
+<ul><li>你可以通过配置 Response 的 finish 和 close 事件来inspect 你即将发到客户端的相应。
+</li></ul>
+<br>
+<pre><code class='code-multiline'>ctx.response.once('finish', () =&gt; { // your codes here })
+ctx.response.once('close', () =&gt; { // your codes here })</code></pre>
+<p><br></p>
+<ul><li>set-cookie 对于 localhost 是不生效的，可以给本地配置一个域名
+</li></ul>
+<br>
+<p><i>etc</i>hosts</p>
+<pre><code class='code-multiline'>127.0.0.1 abc.com</code></pre>
+<br>
+<h2>拓展阅读</h2>
+<a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Access_control_CORS">HTTP Access Control</a>
+
+<h1>离开和开始</h1>
+
+<h2>离开</h2>
+2017/06/08，我离开了 Splunk 上海，骑着我的自行车，从大学路出发，沿西向南，告别了五角场，告别了杨浦，告别了我一直待的外企。四年前从哈工大毕业，机缘巧合的进入 Synopsys，然后因为喜欢篮球，加入了 Second Spectrum,  不久又由同事推荐进入 Splunk.  外企积极的工作氛围，和善的同事关系，良好的员工福利，自由的工作安排让我明显的看到自己成长，也在这四年的时间里，我充分的经历了我人生中最重要的几个事情，和我亲爱的女朋友结为夫妻，共同养育着可爱的女儿和帅气的儿子，感谢过去四年。
+
+进入 Splunk 的第一天起，我就知道我一定不会在这里呆太久的。我喜欢工程师这个职业，我喜欢代码不断的帮助人类解放劳动力，我喜欢技术一点点的改变我们的生活。但是我更希望我的写的每一行代码能够让这个世界变得更好一点点，甚至希望这个过程是直观的，可见的。然而在之前的所有工作中，我都没有感觉这样的体验，只有在偶尔的 side project 反而有这样子的体验。
+
+然后很多决定虽然已经做好了，但是真正采取行动却是需要一定触发，而前几个月的一些事情正好成为导火索，我不再拒绝前同事的拉拢，也会主动的和朋友聊新计划，或是询问自己感兴趣的公司是否有职位开发。
+
+然而我选择了设计家这个团队，这次我没有选择钱多的那个，虽然放弃机会里面有给出了比这里多出了不少的薪资。我还是毅然的来到了这个团队。因为我总觉得，这里可以让我体验到我作为一个工程师一直想体验的那种感觉: 你的代码让这个世界不断变美，而且你可以看到这种变化。
+
+<h2>开始</h2>
+来到设计家已经一个多月了，虽然在很多方面和之前的公司都不太一样，比如不再有无限量的零食饮料，也不再有豪华的早餐，甚至还需要打卡，虽然时间很宽松很宽松。现在才发现工作了这么久，自己原来并不在乎那些东西。
+
+原来自己最在意的是, 所做的事情的价值, 团队成员的专业态度。很庆幸身边都是在这个领域有着深厚功力的前辈，他们很多都是在 Autodesk 创立这个产品的时候就一直专注在这个工具的开发中，很多人的专业态度，无论是对于代码还是产品开发的沟通，都值得我好好学习。
+
+虽然很短的一个月，回顾了一下还是经历不少事情：
+<ul><li>苏州东山的自驾游，公司安排的五星级宾馆，住着很爽，小小的骑行了一下太湖，感觉非常惬意。
+</li><li>完成了前端大项目的工程化，完成了团队遗留了很久的代码模块化问题。
+</li><li>开始前端 3D 开发，系统的开始图形学的学习
+</li></ul>
+<br>
+<p>很庆幸自己做了这样的选择，来到了设计家这个团队，和经验丰富的前辈们学习好玩的图形技术，并且一起并肩开发着好玩的设计类工具产品，为才华横溢的室内设计师们提供最好用的设计工具，甚至让普通人也可以用我们的工具设计自己的家这件事值得我投入自己的时间和精力。</p>
+<br>
+<p>因为这让我觉得：我的代码让这个世界变的更好了，而且我可以看到这种变化，虽然现在它还很小很小。</p>
+<br>
+<h1>Bug和Feature</h1>
+<br>
+<p>作为开发者，你每天都会面对一个问题：我到底要先修 bug 还是先做 feature呢?  有的同学选择先修 bug，有的同学选择先做好 feature，也有的同学选择边修 bug 边做 feature.</p>
+<br>
+<ul><li>因为我们老板更关注新 feature
+</li><li>因为我们 KPI 和 bug 数目挂钩
+</li><li>因为我们的客户总抱怨 bug 多
+</li><li>因为我们有些 bug 没有办法修
+</li></ul>
+<p>......</p>
+<br>
+<p>我的原则： 优先修 bug 再做 feature。 几乎对所有人而言都不可能一直写出没 bug 的代码，所以出现 bug 真是太正常了，但是出 bug 原因是什么呢：</p>
+<br>
+<ol start="1"><li>你没有理解需求
+</li></ol>
+<br>
+<p>如果需求都没有理解清楚，自然做出来的东西也不是客户(PM,  老板)想要的。为什么需求没有理解清楚呢：</p>
+<br>
+<ul><li>他们没有说清楚
+</li><li>你没有理解清楚
+</li></ul>
+<br>
+<p>这两点都是致命的，如果不能很好的解决，那么就算你开始做新的 feature，你还是会出现很多的 bug，然后恶心循环。</p>
+<br>
+<ol start="2"><li>你没有写好代码
+</li></ol>
+<br>
+<p>如果你没写好代码，那么显然修 bug 可以让你知道哪些是可以改善的地方，哪些是应该避免的地方，哪些是你缺乏的知识。搞清楚了这些东西，你才能每一次做 feature 的时候确实是在做 feature，而不是在 making bugs。</p>
+<br>
+<p>但是很多人说，现实总是很残酷的，因为我要修的不只是我自己 made 的 bug，还有某某的，某某某的，某某某某的，所谓的历史问题。那怎么办呢，这样的 bug 很多时候我需要花很多的时间去研究，而且研究了之后还不一定有解决方案，那我还要不要做 feature 了， feature 还是要做的，不过在这之前，我们可以对这些 bug 做这样的分析：能否解决, 如果能，那么就解决之；如果不能，那么看其是否和你要做的 feature 有关联，如果没有，可以 assign 别人，或者放到 backlog 里面去。</p>
+<br>
+<p>说了那么多，其实就几个字：bug 优先。我的心愿是: 世界和平，没有 bug。</p>
+<br>
+<h1>记一次大规模重构</h1>
+<br>
+<h2>前言</h2>
+<p>一个健康发展的项目，是不应该有大规模重构的。一个健康的项目，它随时随地的进行着一些小规模的重构，循序渐进，不断改进，积少成多，不断保持项目的活力。但是现实情况是: 我们安逸于现状这样子，虽然它有一些小问题，但是我想我们能够忍受，我们的项目成员不想/敢做出改变，因为它(可能)会触发一些问题。直到有一天，我们不能忍了，因为我们离主流的技术已经很远，我们目前不能使用好的技术方案，我们的开发效率已经太低，我们有很多 bug 不能合理修复，就算修复也可能会带来更多的 bug。所以我们决定来一次大的重构。</p>
+<br>
+<p>因为我们都这样：小毛小病的，没有什么大碍。直到病入骨髓了，我们痛下决心，做一个大手术。其实小毛小病，生活注意一下，或者吃两服药，就可以药到病除，然后手术却没有那么轻松，如果运气不好，轻则留下浅浅伤疤，重则可能危及生命。就算手术顺利，也需要好长的一段恢复期啊。</p>
+<br>
+<p>但是如果真要进行一次大手术，我们应该要怎么做才能平安度过呢？说说我自己的真实故事吧。</p>
+<br>
+<h2>动手术</h2>
+<p>我上个月来到现在的设计家上海团队。我的第一个大任务: 前端代码的分拆。设计家的整个前端是一个超复杂的 Web 应用，单单是 JavaScript 的代码行数就超过了 20w 行，不包含第三方库。在没有做任何的代码分离之前，我们所有的代码都是放在一起的，包括应用的核心框架，图形的底层操作API，业务组件（UI及业务逻辑）都放在一起。由于历史的原因，不同时期的代码不仅风格迥异，而且打包工具也不统一。这样的一个巨大的混杂的代码库会导致很多问题， 比如</p>
+<br>
+<ul><li>构建工具复杂
+</li><li>构建时间长
+</li><li>测试代码难度很大
+</li><li>引入新技术阻力很大
+</li></ul>
+<br>
+<p>等等这些可见的问题，还是一些隐藏的问题，比如不同的代码风格，到沟通成本上升。各模块之间的依赖交错复杂等等。</p>
+<br>
+<p>经过一个月的努力，终于把一个超级巨无霸单一项目分拆成了五个独立的项目，一个主项目(主要是网站的业务代码，是整个 3D 设计家的入口), 以及一个核心库项目（它是整个 3D 设计家的框架层代码），还有其他三个小的基础 API 项目，除了主项目，其他的项目都以 npm  包的形式为外界提供服务。每个项目自己的构建方式对外界透明的。</p>
+<br>
+<h3>代码层</h3>
+<p>在进行分拆模块的时候，如下因素.</p>
+<br>
+<ul><li>是否和业务无关
+</li><li>是否可以复用
+</li></ul>
+<br>
+<p>显然框架层面的代码最应该被独立出来，因为它的接口必须保持一定的稳定性，而且和业务逻辑完全无关，当然它的特殊的构建方式也让我第一时间把它分拆了出来成为独立的项目，对外以提供 npm 包的形式服务。这样我就可以第一时间在主项目中使用统一的构建工具来完成构建 (webpack)。</p>
+<br>
+<p>其次，一些提供特殊功能的组件，比如数学计算，图形操作等这类基础的 API，也立即被提出来。同类型的还有一些有着代理作用的代码，它们连接着我们团队的主项目和其他团队的库，这些代码通常被不同团队的开发者改动。</p>
+<br>
+<p>最后主项目就变成了一个纯业务逻辑的项目，主要进行各种功能的维护，新 feature 的开发，是最为 Active 的代码。而分离出去的项目都以独立的 npm 包为外界提供服务，它们的开发较为稳定一些，而不同的项目可以按照团队的技术选择进行多样化的开发，这样在独立项目以上可以多样化技术选择，而同一个项目内部则保持统一的，这样就既兼容了稳定性，而又保持了技术的良好更新迭代。</p>
+<br>
+<h3>CI/CD 层</h3>
+<p>由于项目的拆分，如何保证各个项目中的代码依赖能够保持同步，保证开发效率的同时能够项目能够保持很好的持续集成和持续部署成为了我们首要解决的问题。</p>
+<br>
+<h4>自动构建</h4>
+<p>分离出去的独立项目，它们的发布行为就演变成了一个 npm 包的自动构建和发布。为了保证项目稳定，每一个分离出去的独立项目都采用 release 和  develop 两种形式的 npm 版本特征，它们分别对应的项目的 releae 和 master 分支。当 master 有新的提交的时候，项目在 CI/CD 系统自动构建然后发布 x.y.z-develop-build-number 这样版本的  npm 包，同理，如果是 release  有新的提交，则会自动发布 x.y.z-release-build-number 这样版本的 npm 包。</p>
+<br>
+<h4>关联触发</h4>
+<p>经过分拆之后，我们项目由原来的一个巨大的 A, 变成了五个小 a.</p>
+<br>
+<pre><code class='code-multiline'>Super Big A =&gt; (a1, a2, a3, a4, a5)</code></pre>
+<br>
+那么显然，任何小的项目（a2, a3, a4, a5）有更新的时候，我们都必须要触发主项目 (a1) 的构建和并且进行相关的自动化测试。所以在我们的 CI/CD 系统中，我们在 Jenkins 的 job 配置中进行了项目的关连触发。并且主项目(a1)的构建会根据当前所在的 branch （release 还是 master）自动安装与其对应的其他项目（a2, a3, a4,a5）的最新依赖包。然后进行构建和自动部署到对应的开发环境（alpha) 或者生产环境。
+
+<h2>反思</h2>
+这次的大手术，整体来说结果是好的，虽然其中遇到了不少的问题，但是趟过了这些坑之后，也让我自己在更多的方面了解了自己，了解了团队，与此同时在提醒自己在哪些地方需要努力。我自己总结了下面几点我们没有做好的地方:
+
+<ul><li>让一个项目新手来独立完成
+</li></ul>
+<br>
+<p>团队选择刚刚加入团队的我来进行这次大手术，确实不能说是一个正确的选择。虽然我自己对于大型前端的架构有一定架构能力，而且对于主流的构建工具也很熟悉。但是项目的重构不是一个小手术，我们需要一个对整个项目都十分熟悉的人来进行主导，而且最好能够有一个得力的助手来一起完成。因为任何的项目都有很多隐含的坑，特别这种需要大手术的项目，很多的坑稍微一动还有可能会致命，只有对项目十分熟悉的人，才能够知道如何避开（或者直接解决）哪些坑而不耽误重构。</p>
+<p>当然，项目组最开始是安排了对项目了解最深的工程师来和我一起来进行的，不过进行到一半的时候，他离开了团队，最后只得我一个人来进行。这是一个谁也没有想到的意外。所以当重构的过程中，如果出现任何的问题，我几乎都会花两倍的时间去解决问题，因为我首先需要去知道到底为什么出现问题，原来采用什么方法来解决，现在我需要选择什么替代的方法来解决。更糟糕的是，我现在需要花大量的时间去和其他不固定的同事去沟通来保证各个模块在重构的过程不受到伤害。</p>
+<br>
+<ul><li>没有设定好重构的目标
+</li></ul>
+<br>
+<p>在进行这次重构，我们并没有设立一个可以量化的目标，我们仅仅只是有这么一个愿景: 重构之后，项目还能和以前一样运转正常，并且开发效率能有所提高。但是这样一个笼统的希望对于整个重构没有任何帮助。我们需要设定一个可以量化的目标，比如所有的测试不能被破坏，构建的时间不能超过10分钟，构建工具必须统一等等。</p>
+<br>
+<ul><li>没有测试
+</li></ul>
+<br>
+<p>这是一个老生常谈的问题了，没有完备的测试，每一次的改动都会让你惊心胆战。因为你很难确定你的改动会不会造成什么伤害。这也是后续我们希望可以在团队中推广的，也许每一次的开发都做到 TDD 很难，但是必要的单元测试希望可以做到。</p>
+<br>
+<ul><li>没有做到完全的沟通
+</li></ul>
+<br>
+<p>由于项目的重构会影响到每一个开发者，所以最好让我们一个团队成员都能够理解到这次改动可能造成的影响，不然出现任何的问题，很多人都会感觉很意外，而且束手无策，这样无疑对于重构产生的问题的处理没有任何帮助，而且可能会雪上加霜。</p>
+<br>
+<p>虽然遇到了不少问题，甚至可能有的同事可能会反感：项目运行的好好的，干嘛搞事情啊。但是总体的结果是好的，这不仅对于让我们项目更加健康的发展做好了很好的基础，而且在今后也会大大的提高我们的开发效率，同时保证产品的快速稳定迭代。</p>
+<br>
+<h1>我的第一个 Golang 项目 fx</h1>
+<br>
+<h2>前言</h2>
+<p>fx 是我在 <a href="http://gohack2017.golangfoundation.org/">Go Hack</a>的一个小作品，Go Hack 是一个以Go语言为主要编程语言的黑客马拉松比赛。虽然我和我队友两人都是写JavaScript的前端工程师, 以Golang 零基础参加这次比赛，不过很开心我们完成了fx，也喜欢上 Golang 这门语言.</p>
+<br>
+<p>读了那么多年书，写了那么久的代码，如果说有什么概念是深入骨髓的，只能说是”函数“了。虽然在数学上和编程上，“函数”这个词有很大的不一样的，但是有一点上它们是类似:</p>
+<br>
+<pre><code class='code-multiline'>接受输入（可能为空值），然后进行处理，最后输出处理结果。</code></pre>
+<br>
+我们几乎可以用这个概念来描述所有的行为. 比如我们可以用下面的函数的来描述我们 fx 的诞生过程：
+
+<pre><code class='code-multiline'>函数 f = Go Hack (以 Golang 为项目编程语言的黑客马拉松活动)
+输入 input = [两个Go语言零基础的JavaScript工程师，两台Macbook，很多很多的功能饮料]
+fx = f(input)</code></pre>
+<p><br></p>
+<h2>fx 是什么</h2>
+<p>那么 fx 是什么呢，一句话来说就是 : fx 是一个可以把一个函数变成一个服务的工具.  一个简单的例子来说一下 fx 的功能吧. 比如你写好了很棒的函数 , 它是这样的:</p>
+<br>
+<p>func.js</p>
+<pre><code class='code-multiline'>module.exports = (input) =&gt; {
+    return parseInt(input.a, 10) + parseInt(input.b, 10)
+}</code></pre>
+<p><br></p>
+<p>它的作用就是计算两个数的和.  你把这个函数写在 <code class='code-inline'>func.js</code> 这个文件里面。 这时候你希望可以将这个函数编程一个服务，对外提供一个 url 可以供外界访问.  但是想到 nginx, web server,  api gateway…, 你头有点大了。 现在你可以简单的这样做。</p>
+<br>
+<pre><code class='code-multiline'>fx up func.js</code></pre>
+<br>
+如果一切没有什么问题，你可以得到一个url.
+
+<pre><code class='code-multiline'>$ fx list
+
++------------+---------+---------------+
+|     ID     |  STATE  |      URL      |
++------------+---------+---------------+
+| ce925443d5 | running | 0.0.0.0:40549 |
++------------+---------+---------------+</code></pre>
+<p><br></p>
+<p>访问你的服务试试看</p>
+<br>
+<pre><code class='code-multiline'>$ curl -X POST 0.0.0.0:40549 -H "Content-Type: application/json" -d '{"a": 1, "b": 1}'</code></pre>
+<br>
+你会得到 <code class='code-inline'>2</code>. 这说明你的函数已经变成了一个服务了。
+
+<h2>fx 如何工作</h2>
+fx 有两个部分组成，fx server 和 fx client, 最开始的 client 和 server 基于 websocket 进行通信，所有的交互基于 websocket message 来进行, 当时选择 websocket 的原因是因为其简单，能够快速验证我们的想法。当项目做完了演示了之后放到了 <a href="https://github.com/metrue/fx">Github</a> 之后, 收到了很多的反馈，有同学提出了可以采用 RPC 架构来做，gRPC 如雷贯耳很长时间，就是没有机会去实践，但是后来工作一直很忙，所以没有能够及时完成迁移，然后社区的力量是强大的，一个就职于意大利FBK的哥们发Email和我说，他想参与维护 fx, 我简单看了他的Github主页了之后，就直接把他放到了 collaborator   list 去了，后来他直接发了一个很大的 <a href="https://github.com/metrue/fx/pull/100/files">Pull Request</a>过来，就是用 gRPC 替换了 websocket 的，我当然就很开心的做了merge.
+
+所以现在的 fx 是一个基于 gRPC 框架的工具. 提供三个核心功能:
+<pre><code class='code-multiline'>Usage:
+  $ fx up   func1 func2 ...       deploy a function or a group of functions
+  $ fx down func1 func2 ...       destroy a function or a group of functions
+  $ fx list                       list deployed services</code></pre>
+<p><br></p>
+<p>所以整个架构也很简单，fx up 会将 function 的定义内容传递给 fx server，fx server 接受到 function 的内容了之后，匹配到正确的 Dockerfile 和对应的构建镜像所需的资源, 然后会调用 Docker Engine 的 api 去构建相应的服务，最后把生成的服务的 URL 返回给客户端.</p>
+<pre><code class='code-multiline'>                up/ deploy a function to service
+            --------------------------------------&gt;
+            &lt;--------------------------------------
+                down/ stop functions' services
+            --------------------------------------&gt;
+fx client	&lt;--------------------------------------   fx server
+
+                list/ list deployed services
+            --------------------------------------&gt;
+			&lt;--------------------------------------</code></pre>
+<p><br></p>
+<h2>fx 支持哪些编程语言</h2>
+<p>由于 fx 的一个服务的背后都是一个 Docker Container, 所以 fx 几乎可以支持所有的编程语言，由于精力有限，目前 fx 支持这些编程语言:</p>
+<ul><li>Golang
+</li><li>JavaScript/Node
+</li><li>Ruby
+</li><li>Python
+</li><li>Java
+</li><li>PHP
+</li><li>Julia
+</li></ul>
+<br>
+<h2>fx 的未来</h2>
+<p>啥未来，就是一个小工具而已。</p>
+<br>
+<br>
+<h1>用一个 JavaScript 函数来实现 ChatOps</h1>
+<br>
+<h2>前言</h2>
+<p>本文的目的是简单介绍一个下我自己如何借助 <a href="https://github.com/metrue/fx">fx</a>，通过一个 JavaScript 函数就可以实现一个简单的 ChatOps 方案的.</p>
+<br>
+<p>由于公司 Ops 团队人手不够，维护基础设施（jenkins，gitlab，redis，数据库等等）的稳定和持续发展已经占据了他们大部分的精力，没有更多的资源来做更好的自动化，趁着公司内部开展Hackathon，我们开发团队几个同事决定自己来做一会 DevOps 的角色，从开发团队的需求出发搭建一个完整的CI/CD自动化环境.  而我当然是选择其中最好玩的一个环节喽：ChatOps 的 Bot.</p>
+<br>
+<p>ChatOps 就不用多说了，就是 <code class='code-inline'>ChatOps = Chat + Ops</code> 嘛，就是通过 Chat 的方式来完成 Ops 相关的操作。当然业界已经有很成熟实现 ChatOps 的框架 <a href="https://github.com/hubotio/hubot">GitHub - hubotio/hubot</a> ，或者 <a href="https://github.com/howdyai/botkit">botkit</a> , 都在很多大公司广泛的使用。</p>
+<br>
+<h2>分析需求</h2>
+<p>不过我想另辟蹊径 (好吧，就是想装逼个X)，用一个函数来实现一个 ChatOps，显然它可能不是一个成熟的产品，不过是一种很好玩的思路。使用 Function as a Service 的思路来构建一个 ChatOps, 说到 Function as a Service， 当然就要使用到我自己开发的<a href="https://github.com/metrue/fx">fx</a>了 ，它可以把你写的函数(Function) 直接变成一个服务(Service), 而且 fx 几乎支持了所有的主流语言 （Golang, JavaScript/Node, Ruby, Python, Java, PHP Julia).</p>
+<br>
+<p>简单的分析 ChatOps 要做的事情: 接收即时消息工具(Slack, HipChat)发送来的消息，解析消息目的，然后调用相应的Ops工具 (Jenkins ) 完成特定的操作. 所以可以简单系统架构如下:</p>
+<br>
+<pre><code class='code-multiline'>			  message				   call API
+IM (Slack)  ----------&gt; ChatBot --------------&gt; Ops System
+            &lt;----------		   &lt;--------------
+				message					result</code></pre>
+<p><br></p>
+<p>整个过程，我们可以认为是一个无状态的处理和调用的过程，所以我们也可以用一个函数来表示这整个过程:</p>
+<pre><code class='code-multiline'>ChatBot = f(message)
+</code></pre>而这个 f (message) 就是一个简单（或者复杂）的函数，它接受从我们在即时消息发过来的消息，然后做分析转化成特定的Ops任务，去调用相应的Ops工具的 API去完成相应的工作。
+
+<h2>代码实现</h2>
+好吧，那我们就按照我们上面的分析来写这个函数就可以了。假设我们需要去实现下面的几个需求:
+
+<ol start="1"><li>能够在 Slack 中接收一个 build 的指令
+</li></ol>
+<p>根据消息传过来的project name 和 branch 去调用 Jenkins 做相应的 build.</p>
+<br>
+<ol start="2"><li>能够在 Slack 中接收一个 query 的指令
+</li></ol>
+<p>根据消息传过来的project name 和 branch 去调用 Jenkins 查询 Job 的状态.</p>
+<br>
+<p>所以我们的代码其实就非常的简单，一个函数的整体实现如下.</p>
+<br>
+<pre><code class='code-multiline'>const { exec } = require('child_process');
+
+module.exports = async (req) =&gt; {
+    const { text } = req;
+
+    // 从接收的消息中做简单的分析
+    const analyze = (text) =&gt; {
+        const [cmd, projectName, branch] = text.split(/\s+/);
+        return {
+            cmd,
+            projectName,
+            branch,
+        }
+    };
+
+    // 调用Jenkins的API做build
+    const build = (projectName, branch) =&gt; {
+        const { projectName, branch } = options;
+        const URL = `http://&lt;your jenkins server&gt;/job/${projectName}/job/${branch}/build`;
+        const cmd = `curl -X POST  ${URL} --user admin:admin`;
+        return new Promise((res, rej) =&gt; {
+            exec(`${cmd}`, (err, stdout, stderr) =&gt; {
+                if (err) {
+                    rej(err);
+                } else {
+                    res(stdout, stderr);
+                }
+            });
+        });
+    };
+
+    // 调用Jenkins的API做Job状态的查询
+    const query = (projectName, branch) =&gt; {
+        const URL = `http://&lt;your jenkins server&gt;/job/${projectName}/job/${branch}/lastBuild/api/json`;
+
+        const cmd = `curl -X POST  ${URL} --user admin:admin`;
+        return new Promise((res, rej) =&gt; {
+            exec(`${cmd}`, (err, stdout, stderr) =&gt; {
+                if (err) {
+                    rej(err);
+                } else {
+                    const ret = JSON.parse(stdout);
+                    res(ret);
+                }
+            });
+        });
+    };
+
+    const message = (msg) =&gt; {
+        const SEND_URL = "https://hooks.slack.com/services/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j";
+        const cmd = `curl -X POST --data-urlencode "payload={\\"channel\\": \\"#hack-team-1\\", \\"username\\": \\"chatops\\", \\"text\\": \\"${msg}\\"}" ${SEND_URL}`;
+        return new Promise((res, rej) =&gt; {
+            exec(`${cmd}`, (err, stdout, stderr) =&gt; {
+                if (err) {
+                    rej(err);
+                } else {
+                    res(stdout, stderr);
+                }
+            });
+        });
+    };
+
+    const { cmd, projectName, branch } = analyze(req.text);
+    if (cmd === 'build') {
+        await build(projectName, branch);
+        message(`${projectName} ${branch} build started`);
+    } else if(cmd === 'query') {
+        const res = await query(projectName, branch);
+        message(`${projectName} ${branch} built ${res.result} ${res.culprits[0].fullName}`);
+    } else {
+        message ('Command not supportet yet');
+    }
+}</code></pre>
+<p><br></p>
+<p>实现了这个函数之后，我们可以通过 <a href="https://github.com/metrue/fx">fx</a>立即部署成一个服务.</p>
+<br>
+<pre><code class='code-multiline'>fx up chatops.js
+</code></pre>如果你想我们一样使用的 Slack 的话，你需要在 Slack 的 Outgoing hook 中把你刚刚部署好的服务的 url 配置过去，然后设置相应的触发条件，我们的一个简单但是五脏俱全的 ChatBot 就算完成了.
+
+<h3>Bonus</h3>
+如果你需要一个内网穿透工具，也许 <a href="https://ngrok.com/">ngrok</a> 是你最好的选择。
+
+<h1>说说我所经历的公司</h1>
+
+不知不觉我已经毕业三年了，今年的七月十五号是我正式工作整整三年的日子，在上海这座城市也呆了整整三年，不过今天想说不是上海，想说说我曾经待过的那些公司们，他们的企业文化，工作氛围，员工状态,当然仅仅都是我所感受的。
+
+<h3>Intel</h3>
+厌倦了研究生每天实验室无聊的学术研究的我，和导师商量好了之后，毅然的离开了哈尔滨，潇洒的奔向北京，公司是 <a href="http://www.intel.com">Intel</a>，身份是软件开发实习生，加入的是 SSG Open Solaris Group。 和导师商定的时间是不超过 4 个月，不过后来断断续续差不多一年的时间都在北京混，直到毕业前不到三个月才回学校，蛮感谢我导师容忍了我的任性。
+
+作为实习生身份，我并没有做太多深入的东西，依稀还记得当时完成了一个 XML 读写库，当是基于 <a href="http://www.msweet.org/projects.php?Z3">MINI-XML</a>, 全部使用 ANSI C 进行编写，这是我生产环境的第一个项目。 这段实习经历收获到的东西远比自己对团队所产生的价值高，带我的是一位很资深的软件工程，从他身上也学到了不少知识，对一个初入职场的新人来说很是宝贵。<a href="http://www.intel.com">Intel</a> 的这段经历让我养成了很多好习惯.
+
+<ul><li>多看好书
+</li></ul>
+<p>还记得当是刚入职，带我的老师就推荐我两本书: <a href="https://book.douban.com/subject/3652388/">程序员的自我修养</a> 和 <a href="https://book.douban.com/subject/3227098/">编程珠玑</a>, 现在我依然还偶尔会翻看。</p>
+<ul><li>版本控制, 无论多小的项目
+</li><li>学会测试，然后养成习惯
+</li></ul>
+<br>
+<p>Intel 的工作环境还挺不错的，茶水间有免费的饮料和水果，自由的上下班时间，同事之间氛围和谐，项目规划很人性。</p>
+<br>
+<h3>docomo</h3>
+<p>当是去<a href="https://www.nttdocomo.co.jp/">docomo</a>的原因其实是毕业论文还没有完全写完，还有很多理论的东西需要做，所以想离开Intel，去一些可以安心做科研的做研究，致力于写好毕业论文，所以最后选择 docomo。 我在 docomo 呆了大约一个月，给我最大的收获，无论如何，都不要去一家日本公司。无他，企业文化和我基因有冲突。</p>
+<br>
+<h3>Synopsys</h3>
+<p><a href="http://www.synopsys.com">Synopsys</a> 是我毕业之后正式工作的第一家公司，也是对我影响最大的公司。一呆就呆了两年多,我收获了很多东西，好多好玩的小伙伴，我们一起做项目，一起玩晚会，一起吃喝玩乐，leader 和 manager 都非常的 helpful, 他们给你充分的自由，又让你养成了很好的责任心。</p>
+<br>
+<p>我当是加入是 <a href="http://synospys.com">Synopsys</a> SWE team, 这也许是 <a href="http://www.synopsys.com">Synopsys</a> 这个传统的软件公司中最不传统的部门，SWE 主要是负责 Synopsys Infrastructure 方面，我们开发了很多很优秀的基础设施软件，从 Workflow 的管理，到 Build 和 Regression Testing 的 sheduler, runner, monitor, analyzer, 到 disk, virtual machine 的管理和控制。</p>
+<br>
+<p><a href="http://www.synopsys.com">Synopsys</a> 是家很好的公司，SWE team 是一个很棒的团结，老同事们都经验丰富，乐于助人，不少的老同志也可以说是我心中的极客，而新的小朋友们也都特别的优秀，充满了责任心。我很享受和怀念在 <a href="http://www.synopsys.com">Synopsys</a> 工作的日子。</p>
+<br>
+<h3>Second Spectrum</h3>
+<p><a href="http://secondspectrum.com">Second Spectrum</a>是一家洛杉矶的大数据创业公司，虽然是一家成立不到三年的创业公司，<a href="http://secondspectrum.com">Second Spectrum</a> 已经成立了包括中国上海，瑞士洛桑，美国洛杉矶三个研发中心，感觉应该像个跨国的超大公司，其实我们所有员工加起来不到70人，作为体育领域大数据分析的佼佼者，<a href="http://secondspectrum.com">Second Spectrum</a> 80％的员工都是工程师。 <a href="http://secondspectrum.com">Second Spectrum</a> 也许是我待过的所有公司中名校毕业生比例最高（主要是 MIT， 加州理工，康奈尔）的公司了，不过在公司刚开始成立的时候，公司为了招 MIT 的人，也是蛮拼的，专门在 Boston 开设了一个办公室，给那些不愿意来洛杉矶的 MIT 或者 Harford 的同事。</p>
+<br>
+<p><a href="http://secondspectrum.com">Second Spectrum</a> 也是对新技术最激进的公司，在项目中, 数据分析团队大量使用 Python, 而开发团队则大量 JavaScript, Go, Rust, Ruby, Nim, Elix, Swift，Lua，而最近在评估Closure，在框架方面也是五花八门，前端方面 React 已经成为了公司前端项目的默认框架，而 Koa 也逐渐的取代了 Express 成为了公司 Node 项目的默认后端服务程序，Postgres 超越了 Mongo 成为了公司的首选数据库，移动开发方面，Swift 是必选，而 React Native 是否可以用作下一个大移动项目，也正在评估阶段，因为 Redux + React/React Native 的开发方式，真是俘获了好多工程师的心。</p>
+<br>
+<p><a href="http://secondspectrum.com">Second Spectrum</a> 的工程师们做事情很快，从 CTO 到普通工程师，大家想好要做一个东西之后，拉几个人过来，开始探讨方案, 然后一个构建后端 API，一个构建前端, 一个解决和其他项目的依赖，不到几个小时，一个 demo 就搞出来，然后就开始开发 feature, 很快就可以做展示，然后 push to production, 不断 scale。当然能否这样去运行你的团队，取决于你团队中的工程师，<a href="http://secondspectrum.com">Second Spectrum</a> 招人的时候考察很多时候并不是这个人 Python 有多厉害，JavaScript 有多厉害，其实更多的时候他是否有良好的计算机基础，解决问题是否有清晰的思路。<a href="http://secondspectrum.com">Second Spectrum</a> 会详细的看你的 GitHub, 会审阅你的代码风格习惯，会详细的看你的博客。而在面试的过程中，范围也不固定，从数据库，到前端，从设计模式，到移动开发，都可能会涉及。而对于是非英语母语的候选人，英文会是很重要的一部分。</p>
+<br>
+<p><a href="http://secondspectrum.com">Second Spectrum</a> 很重视测试和 Code Review, 每一个 feature 的开发，大家都会自觉的写好相关的测试, 进行 peer-to-peer Code Review，然后才会 deploy。</p>
+<br>
+<p><a href="http://secondspectrum.com">Second Spectrum</a> 是工程师文化很重的公司，无论是在洛杉矶团队还是上海，自由的工作时间，开放的工作环境，分享是公司文化的很重要的一部分，而且融入到了面试中，所以资深的工程师们都十分热心帮助年轻工程师，而作为上海团队资历相对浅的我，得到很多很多的帮助，不仅仅是技术层面，更多还有他们多年工程历练之后的技术态度和问题观看视角。<a href="http://secondspectrum.com">Second Spectrum</a> 基本上和我心中的硅谷优良的创业公司基本上一致，灵活，自由，激进而又不失稳重。</p>
+<br>
+<h3>Splunk</h3>
+<p><a href="https://www.splunk.com">Splunk</a> 是大数据领域的第一家那根达斯上市公司，Splunk 的文化很棒，虽然公司业务已经很成熟，而且一直增长喜人，但公司上层的居安思危，公司文化的 Disruptive 精神，让公司无论在产品和技术上都处于市场领先水平。周期性的 hackweek也是工程师保持激情的一枚良药，不只是因为你又很大的几率获得很棒的奖励，还有可能你的项目成为公司产品的一部分。</p>
+<br>
+<p>公司的技术选型相对来说很开放，我在 Splunk 的第一个项目是做一个数据工程数据可视化的 app, 如果按照传统，我可以直接基于 Backbone 来快速解决问题，但是考虑到后续的可维护性，我和团队商量使用 React 来构建 UI, 后来虽然移植过程有一翻滋味，但是最后的结果不错，而与此同时，Splunk 的官方开源 UI 库也使用了 React 来构建。Splunk 是一个很注重工具的一家公司，一言不合就造轮子啊， 当然这样有时候也不一定都是好的。</p>
+<br>
+<p>当然在 Splunk 上海，很吸引人的还有其丰富多彩的活动了，公司在丰富员工生活方面，确实是不惜重金啊，一言不合就团建，同事们也很爱玩，所以来到 Splunk 之后除了注意你的体重，还是要注意你的体重呀。</p>
+<br>
+<h3>设计家</h3>
+<p>设计家是居然之家从 AutoDesk 买下的开发团队, <a href="https://homestyler.com/">HomeStyler</a> 是设计家团队的主要产品，在国内叫 <a href="https://www.shejijia.com/">居然设计家</a>, 其实加入设计家是很偶然的巧合, 我当时面试一家公司，面试我的面试官觉得我喜欢做前端交互更感兴趣，去他当时的团队很可惜，所以给我推荐到设计家团队，所以我就去聊了一下，简单的聊了一下之后。我经过思考之后，我决定以全栈工程师的身份加入设计家前端团队，做 3D 云设计的开发, 最开始的时候负责整个前端架构调整，然后和 Jerry 开始做参数化引擎和独立应用架构的橱柜应用的开发。很艰难但是我们还是在不到四个月的时间，完成了参数化引擎的开发，3D交互的整体流程化，橱柜定制功能的上线。不过很可惜，由于各种原因，有一部分核心同事相继离开了团队，真的是很惋惜，他们都是图形领域拥有丰富经验，工程实践能力超强的工程师，他们的离开对于产品的开发和规划都是非常的惋惜的。</p>
+<br>
+<h3>未完待续</h3>
+<p>我不知道在我的职业生涯，会经历多少雇主，当然，只会不变或者变多，但是我希望不要太多，而且我希望其中有一天我希望雇主是我自己。</p>
+<br>
+<h1>2017年终总结</h1>
+<br>
+<p>2017 是很忙碌的一年，离开很自由的 Splunk，来到了现在的 <a href="https://shejijia.com">设计家</a>团队，换了团队，换了行业，也换工作方式，很多地方需要适应，不管怎样，每一个新的开始都是一个挑战。所以我还是怀着愉快的心情来写这篇年终总结吧.</p>
+<br>
+<h3>工作</h3>
+<p>也许全屋定制团队是整个居然设计家上海最忙碌的 Scrum Team 吧，查看打卡就知道我们的成员有多少次都是工作到最晚的。虽然没有强制性的 996, 但是平均下来我们相对 996 过犹不及。</p>
+<br>
+<ul><li>重构 3D 工具
+</li></ul>
+<br>
+<p>3D 工具作为一个拥有复杂功能，而且历史长久的项目，它拥有这超过 25w 的 JavaScript 代码，无数的 CSS 文件，无数的各类资源文件。而且各种管理风格千差万别。 JavaScript 部分: 既有基于 Google Closure 构建方式的代码，又有 jQuery 风格的大量操作 DOM 的代码，还有很多 ES3/ES5 的代码，还有今年来才引入的 ES6/ES7 风格的代码，还有无穷的原生的 JavaScript 代码。而在 CSS 方面，有原生 CSS 写法，也有 Less/Saas。</p>
+<p>而在代码架构方面，3D Tools 实际的架构是这样的:</p>
+<pre><code class='code-multiline'>App = App Core + Plugins
+
+App Core = (App Transaction Management) + App Data Model + App       Views
+</code></pre>为了更好支撑未来更复杂的需求，更快的开发效率，我们对这个代码库进行调整，细节可以在我的这篇文章 <a href="https://minghe.me/2017-08-14-%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%A4%A7%E8%A7%84%E6%A8%A1%E9%87%8D%E6%9E%84.html">2017-08-14-记一次大规模重构</a> 了解到，当时真是初生牛犊不怕虎啊，刚到公司不到一个月，才敢对多年历史的复杂项目大刀阔斧的改造。虽然期间又一些问题，不过对于我个人而言，这样的经验无疑是珍贵的，在很短的时间就了解到整个产品的各方各面，对于我如今的开发都是非常有帮助的。
+
+<ul><li>橱柜定制从 3D 工具应用独立出来
+</li></ul>
+<br>
+<p>橱柜定制作为整个全屋定制项目的排头兵，为了适应以后的快速迭代，我们把橱柜定制从原来作为 3D 工具的一个 plugin 独立出来成为了一个独立的应用，独立的 CodeBase, 独立的 CI/CD。 这个过程充满的艰辛和刺激，估计只有我和 Jerry 知道吧。 从以前作为一个依赖于 3D 工具的 plugin, 如何能够以最小的依赖，而且非功能退化的独立出来成为一个专用应用，这是不小的挑战，但是我们做到了。</p>
+<br>
+<ul><li>我们从 0 开始搭建整个 3D 定制的参数化引擎
+</li></ul>
+<br>
+<p>任何的引擎都可以这么表征</p>
+<pre><code class='code-multiline'>engine = f(input, rules)
+</code></pre>不同使用场景 (Domains) 的引擎会有不同的引擎规则 (Rules)，而对于家装设计领域，我们的 Rules 来源是各个家装设计公司和生产厂商。如果在这个特殊的领域需求里面抽象出更加适合工程实现的引擎模式成为我们的最头痛的事情，好在团队中的老司机在 Autodesk 已经塌坑无数，在短短的两个月时间里，我们做好了整个参数化引擎，并且在橱柜定制 App 中成功使用，为即将开始的全屋定制打下坚实的基础。
+
+<ul><li>内部 Hackathon 二等奖
+</li></ul>
+<br>
+<p>到了<a href="https://shejijia.com">设计家团队</a>之后就一直想在公司内部搞一场 Hackathon，所以当同事和我说他也想搞的时候，我们就一拍即合，和公司申请了经费，而且老板也支持。虽然其中有一些意外，但是整体还是成功的，而且老板也把 Hackathon 变成了每年两次的常规活动。更值得一提的是我们团队的作品: 小居 - 家装设计语音助理, 也很荣幸的获得二等奖，很是意外。语音交互也许是未来的一个很重要的交互入口，所以一早就有给我们公司的产品条件语音交互功能的想法，所以索性就在这次 Hackathon 实践一下，所以离我哪行中想要达到的样子还差的很远，但是基本的流程已经成型，而且玩了简单的交互。也算是一次成功的尝试吧。</p>
+<br>
+<h3>开源项目</h3>
+<br>
+<br>
+<ul><li><a href="https://github.com/metrue/fx">fx</a>
+</li></ul>
+<br>
+<p>在 <a href="http://gohack2017.golangfoundation.org/">GoHack2017黑客马拉松</a> 虽然没有获奖，但是在那场比赛中完成的 <a href="https://github/com/metrue/fx">fx</a> 成为我去年的小小高光时刻： 在 <a href="https://news.ycombinator.com/item?id=15686661">Show HN: Fx - Poor man's serverless framework</a>发布了之后，迅速串升到Github Go Trend 榜单的第一名，并且持续在榜单首页超过一个星期，Stars 数目如今也吵过 1k,  当然更值得纪念的是，我和 <a href="https://github.com/tj">@TJ</a> 大神终于有同框了，哈哈。</p>
+<br>
+<br>
+<ul><li><a href="https://github.com/metrue/YoYo">YoYo</a>
+</li></ul>
+<br>
+<p>而 YoYo 则是一个自己的一个需求：想要一个很干净纯洁的博客留言系统，不要有各种乱七八糟的社交按钮或者广告，所以我就着手自己写一个系统，留下 email 和你想说的话就可以留言，一个纯 JavaScript 的项目，可以在这篇文章<a href="https://minghe.me/2017-04-18-YoYo:%E8%87%AA%E5%B7%B1%E6%89%93%E9%80%A0%E4%B8%80%E4%B8%AA%E8%AF%84%E8%AE%BA%E6%9C%8D%E5%8A%A1.html">2017-04-18-YoYo:自己打造一个评论服务</a>详细了解。</p>
+<br>
+<ul><li><a href="https://singular.fm/">Singular.Fm</a>
+</li></ul>
+<br>
+<p>是的，我参与的 podcast 终于上线了，很早之前就想要做一档 podcast， 但是一直没有狠下心来实施，后来和 <a href="https://weibo.com/titantse?refer_flag=1005050005_">@梯田</a> 闲聊，正好他也有兴趣，所以一拍即合，说干就干，我们在年前终于录制了一期。希望可以持续做下去。</p>
+<br>
+<ul><li><a href="https://mpapp.tk/">MindPalace</a>
+</li></ul>
+<br>
+<p><a href="https://twitter.com/haojianzong?lang=en">@Jakehao</a>  从深圳来上海玩，下飞机之后突然说有一个idea，稀里哗啦的和我说一通，我没有听太明白，索性就花了一张图给我看，然后我明白了，这就是一个关于人的日志记录工具啊，Splunk 是记录机器日志的，要是有一个app可以让记录人的日志(心思)变得容易，而且随时可以检索，那么一定棒极了，所以当即就决定和他一起做这个app. 然后我们两个都好忙，发布了第一个 Test Flight 了之后，我们还没有太多的时间的高强度的继续开发。只能周末的时候一起搞搞。</p>
+<br>
+<h3>后记</h3>
+<p>做工程师最好玩的地方在于，我们随心所欲的创造，一台电脑，一杯咖啡，一个好玩的创意，就可以让我们在一个地方默默的写几天代码，因为这就是我们的世界，简单而自由的世界。</p>
+<br>
+<h1>YoYo:自己打造一个评论服务</h1>
+<br>
+<p>YoYo 是我尝试打造的一个评论服务，我希望她最终可以成为这样的一个作品:</p>
+<br>
+<ul><li>保持简单
+</li></ul>
+<p>一个简单的评论框，一个简单的回复按钮，一个可以获得回复消息的电子邮件输入框.</p>
+<br>
+<ul><li>不打扰阅读
+</li></ul>
+<p>文章是作者心血，读者为此而来，应该获得安静的阅读体验，而不是充斥着各种社交按钮的丑陋的评论框。</p>
+<br>
+<ul><li>不改变页面原有风格
+</li></ul>
+<p>页面风格是作者自己的心性选择，美感的展现，突兀的夺取眼球是对原作品的不尊重。</p>
+<br>
+<h3>开发现状</h3>
+<p>这会是一个持续的作品，我希望自己所有的愿望都变成一行行运行的代码. 目前已经大概实现了基本的功能，不过离我内心想要的还差很多。我希望自己的每一次提交都在改进这个产品. 作为一个工程师，我希望我的代码和这个作品一样: 保持 clean. 我们都知道，这是不容易，不过因为这是一个自己自足的产品，我并不没有deadline, 我给自己足够的思考时间。</p>
+<br>
+<h3>怎么使用</h3>
+<p>将以下代码放在您要试用 YoYo 评论服务的任何页面中：</p>
+<br>
+<pre><code class='code-multiline'>&lt;div id="YoYo"&gt;&lt;/div&gt;
+&lt;script src="https://yoyo-client-production.s3.amazonaws.com/dist/index.js"&gt;&lt;/script&gt;</code></pre>
+<p><br></p>
+<h3>参与开发</h3>
+<p>目前 YoYo 的技术栈还算简单和现代，她的所有代码都是 JavaScript 的除了部署相关的几行 Bash 代码之外。~~她的后端由 Koa 和 Mongo 组合驱动，没有使用任何的 ORM,~~</p>
+<br>
+<p>Changelog:</p>
+<p>2018/06/03 :   YoYo 整体迁移到了 AWS 上， 所以目前的 YoYo API 是由 API Gateway, Lambda, 以及 DynamoDB 驱动的一个 serverless 架构的微小应用。 基础服务迁移到 AWS 之后，这个 API 代码行数就是大大降低，维护成本也很低，不用在维护自己 VPS, 也不用担心访问的问题。</p>
+<br>
+<pre><code class='code-multiline'>--------------------------------------------------------
+Language      files      blank     comment       code
+--------------------------------------------------------
+JavaScript     2          16         1            167
+--------------------------------------------------------
+SUM:           2          16          1           167
+--------------------------------------------------------</code></pre>
+<p><br></p>
+<p>除了 AWS 之外，YoYo 使用了 SendGrid 来做回复通知功能，SendGrid 有每天 100 条的免费额度，完全满足了我的需求。</p>
+<br>
+<p>而前端，也就是 YoYo 的小小的评论框和评论列表组件, 选用了 React 来构建，由于目前还很简单，没有复杂的状态管理，所有并没有考虑使用 Redux 或者 Mobx 来管理状态，希望将来也不要。</p>
+<br>
+<p>整个项目的持续集成和构建  (CI/CD ) 都在基于 circleci 来完成，<code class='code-inline'>master</code> 分支的提交会触发 <code class='code-inline'>staging</code> 的构建和部署，<code class='code-inline'>production</code> 分支的提交会触发 <code class='code-inline'>production</code> 的部署。</p>
+<br>
+<p>我特别希望:</p>
+<br>
+<ul><li>你可以在你的网站中试用 YoYo, 然后告诉你的体会
+</li><li>你可以开 issue 告诉我你对 YoYo 的任何建议, 无论是功能还是设计
+</li><li>你作为一个代码洁癖的工程师 review 我的代码
+</li></ul>
+<br>
+<p>具体看前往项目主页了解: <a href="https://github.com/metrue/YoYo">https://github.com/metrue/YoYo</a></p>
+<br>
+<h1>文字总是要继续的</h1>
+<br>
+<p>好久都没有写博客了，自从毕业进入公司工作之后。</p>
+<br>
+<p>我总是喜欢做一些推倒了重来的事情，比如这个个人博客，开始是在亚马逊的ec2上用wordpress搭建的，随便写一些乱七八糟的东西，有情绪，有技术，甚至连课程设计的细节都有。后来自己看着自己的文字竟然会生出不好意思的感觉，看着自己折腾了好久的博客界面竟然也有难以名状的厌恶，遂全部删除，而后转移到github page，用jekyll开始写一些纯技术的文章，写了几篇简单的问题解决方案之类的文章之后由于工作和生活的忙碌，博客又遭荒废。</p>
+<br>
+<p>其实，文字无论好坏，记录当时，仅此而已，所以以后不再随意删除所写文章，仅做必要勘误。我曾说，其实自己喜欢写程序的理由很简单，就是想做一些有趣而且有用的事情，仅此而已。所以这里文章我希望也是有趣而且有用的。</p>
+<br>
+<h1>让人理解自己是一件很难的事</h1>
+<br>
+<p>最近和老婆分歧变多了，也许这是必然的趋势。</p>
+<br>
+<p>我们都是独立的个体，我们接受不同的教育，我们有着不同的生活经历。也许真的很难让她真正的从内心深处去体会我的想法，而我又是一个不那么会表达自己的人。这样她就更加很难了解我为什么会这样想了。</p>
+<br>
+<p>小时候生活在贫困而幸福的家庭，父母均是农民，生活艰辛而快乐。</p>
+<p>后来父亲出事，母亲以泪洗面，在好心人的帮助下，才将身受重伤，神志不清的父亲从他乡带回，而当时，父亲的状况生死难测。母亲四处借债求医，我起初都被母亲寄托在外婆家，生怕我看到那一切，而后父亲稍微好转，我们和妹妹才被接回来，那一段时间是一段灰暗的日子，母亲瘦得跟干柴火一样，但是仍然崩盘劳累，十多亩的田地一个人辛苦劳动，一分钱都舍不得多花，一块别人给的饼都拿回来给父亲，而正是那一段时间，母亲把爱诠释深深的印在我脑海里。</p>
+<br>
+<p>我没有让母亲丢脸，成绩一直全校名列前茅，直到大学。</p>
+<br>
+<p>妹妹年龄小，不懂事，那时候家里没有大米，只能吃玉米，妹妹吃不下，一直哭，母亲之后去邻居家借了一碗饭。</p>
+<p>那时候每到赶集的日子，是母亲最劳累的一天，母亲需要凌晨四点钟就起床，去田里摘蔬菜，然后拿到城里去卖。母亲有时候不忍心让我和妹妹那么早起床，就一个摸黑就去了，一个女人，如此...，我每次想起来，我心里都在流眼泪。</p>
+<p>有时候由于蔬菜过多，母亲一个守不过来，所以我和妹妹也会押着蔬菜到城里。又一次，把蔬菜从车上货车上放下来之后，我和妹妹走失了。等我找到妹妹的时候，她已经哭得跟泪人一样，一斤有时候都不到一毛钱的青菜一直维持着我们渡过无数个灰暗的日子。</p>
+<br>
+<p>后来离开小城去了城市上高中，一场病又让家里雪上加霜，家里穷的连妹妹一个月180块的生活费都只能东拼西凑。我也算争气，没有让家里人失望，以全校第六的成绩进入哈工大，虽然我没有选择父亲让我去的复旦，但是我没有后悔，也许上海这座城等着我可以自己立足的时候过来才是最佳时间吧。</p>
+<p>大学对我来说是美好的，而对父母亲确实悲喜搀半，巨额的生活费让母亲只能去温州打工，大字都不识几个，每天为了省钱，就随便水煮挂面就是一餐。父亲也不顾自己的身体，不仅在家里打理田地，还时而去工地做重工。妹妹后来考上浙江的一个三本，然而巨额的学费让她也没有成功入学，父亲一直为妹妹没有能上大学而耿耿于怀。现在每当喝醉了酒之后仍然唠叨。</p>
+<br>
+<p>然而我永远觉得自己是幸运的，幸运出生在这样的一个家庭里，母亲不顾一切的嫁给了父亲，不顾一切在这个家庭最悲惨依然守候着，带着父亲，我，和妹妹走过了那一段黑暗的日子；父亲竭尽全力让我们接受最好的教育，妹妹任性却明事理，在我在外求学之时，母亲在外打工之时，一个人照顾着父亲和家庭。还有那些无数不留姓名的资助过我们的人们。</p>
+<br>
+<p>我一直是内疚的。</p>
+<br>
+<p>尽力而为和竭尽全力也许出发点是一样的，只有像我这样的人才知道它们真正的区别。</p>
+<p>只有懂得为自己的亲人竭尽全力的人，才能对自己的爱人付出一切包括生命。母亲让我明白了这一点。</p>
+<br>
+<h1>深入浅出Ruby中的Block</h1>
+<br>
+<p>深入的学习Ruby了之后，特别是看《Ruby元编程》之后，特别喜爱上Ruby。Perl的吉祥三宝《Learning Perl》, 《Intermediate Perl》以及 《Mastering Perl》要是像这本书一样写的深入浅出，也许我就没有机会去接触Ruby了。 好吧，闲话不叙了，昨天和<a href="http://weibo.com/p/1005051405474972/home?from=page_100505&mod=TAB#place">@Opera</a>说Ruby中的块挺好的，本来想简单的叙述一下其基本功能，没想到自己却没有理解清楚，三言两语说的不清不楚，昨天晚上有认真的总结了一下。自己总算理清楚了Block的脉络。</p>
+<br>
+<h3>从Block开始</h3>
+<br>
+<h4>Block是什么</h4>
+<p>Ruby几乎所有的东西都是对象，但是Block却不是。 Block 本质上就是方法的匿名参数, 所以Block只能被方法调用, 而且方法只能通过yield来调用Block, Block不能在Ruby中独立生存。Block的表现形式只用两种:</p>
+<br>
+<pre><code class='code-multiline'>{ Block content }</code></pre>
+<br>
+或者
+
+<pre><code class='code-multiline'>do
+  Block content
+end</code></pre>
+<p><br></p>
+<p>所以{ }或者do end包围的整体就是Block。</p>
+<br>
+<pre><code class='code-multiline'>def test_block()
+  yield
+end
+
+test_block { puts "is good" }
+
+test_block do
+  puts "is bad"
+end</code></pre>
+<p><br></p>
+<h4>Block可以用来做什么</h4>
+<br>
+<ul><li>让变量穿越作用域，使作用域扁平化。
+</li></ul>
+<br>
+<p>在Ruby中，class，module以及def是作用域门的开关，也就是作用域的边界。各个作用域之间通过这三个门相互隔离，各司其职。但是有时候，我们却需要来回的穿梭在三个域里。Block可以很容易的帮我们做到。</p>
+<br>
+<ol start="1"><li>由于class实际上也只是Ruby中Class类的对象而已，所以可以用Class.new代替class来定义一个类，从而达到穿越class这个门的目的。具体的做法是用一个Bloca获取当前的绑定，然后把这个Block传给Class.new这个方法。
+</li></ol>
+<br>
+<pre><code class='code-multiline'>  var = "foo"
+  MyClass = Class.new do
+	puts "#{var} is in MyClass now"
+  end</code></pre>
+<p><br></p>
+<ol start="2"><li>同理，也可以用Module.new代替module,Module#define_method代替def，就可以通通将module， def这两扇门也打开。
+</li></ol>
+<br>
+<pre><code class='code-multiline'>  var = "foo"
+  define_method :my_method do
+	  puts "#{var} is in my method now"
+  end
+
+  MyModule = Module.new do
+	  puts "#{var} is in MyModule now"
+  end</code></pre>
+<p><br></p>
+<p>但是值得注意的，类(class)和模块(module)的定义中的代码会马上执行，但方法定义中的代码只有在方法被跳用的时候才会被执行。</p>
+<br>
+<ul><li>共享作用域
+</li></ul>
+<br>
+<p>如果在一个扁平作用域定义多个方法，可以通过用一个作用域门来进行保护，并共享绑定，这种技术称为共享作用域。</p>
+<br>
+<pre><code class='code-multiline'>  def define_methods
+	shared_var = 0
+	Kernel.send :define_method, :dec do |x|
+	  shared_var -= x
+	end
+
+	Kernel.send :define_method, :inc do |x|
+	  shared_var += x:
+	end
+  end</code></pre>
+<p><br></p>
+<ul><li>充当上下文探针
+</li></ul>
+<br>
+<p>Object#instance_eval()方法的作用是在对象的上下文中执行一个Block，所以这给我们很容易的在不碰其他绑定的情况可以很轻易的修改当前对象。这有一个好显然的好处是，我们在Block中进行运算，最后更新对象。</p>
+<br>
+<pre><code class='code-multiline'>  class MyClass
+    def initialize
+      @v = 1
+    end
+  end
+
+  obj = MyClass.new
+  v = 20
+  obj.instance_eval do
+	@v = v
+  end</code></pre>
+<p><br></p>
+<p>由于Block接受者obj是MyClass对象，本身就可以访问MyClass的实例变量，而obj和v又处于同一个作用域中，所以可以访问到v，所以这个Block像是深入对象中的探针一样，可以在通过外部的运算之后对对象内部进行操作。</p>
+<p>与Object#instance_eval类似的是Object # instance_exec()， 它允许对块传入参数</p>
+<br>
+<pre><code class='code-multiline'>  class MyClass
+    def initialize
+      @v = 1
+    end
+  end
+
+  obj = MyClass.new
+  v = 20
+  obj.instance_eval(x) do |var|
+	@v = var * v
+  end</code></pre>
+<p><br></p>
+<ul><li>实现一个洁净室
+</li></ul>
+<br>
+<p>由于Block不能独自生存，必须要依赖与方法，那么有时候创建一个对象的目的就是运行一个Block，那么这个对象和块就形成了一个洁净室。洁净室的作用就是准备Block的运行环境，而且还暴露有用的方法可以用。</p>
+<br>
+<pre><code class='code-multiline'>  class MyClass
+    def method1()
+      ...
+    end
+
+    def method2()
+      ...
+    end
+  end
+
+  obj = MyClass.new
+  obj.instance_eval do
+	if method1
+	  do_something
+	end
+  end</code></pre>
+<p><br></p>
+<h3>然后来到Proc</h3>
+<p>Proc 本质是转化成对象的Block。因为Block不是对象，它只用通过方法才能执行，那么如何把块保存起来供以后执行呢。这就是Proc类存在的原因。</p>
+<br>
+<pre><code class='code-multiline'>  dec = Proc.new {|x| x - 1}
+  dec.call(2) # 1
+
+  inc = proc {|x| x + 1}
+  inc(2) # 3</code></pre>
+<p><br></p>
+<p>上面的例子就是块的延迟执行(Deffered Evaluation), 因为Block本身只要出生就立即执行，当Block变成Proc对象之后，我们就可以在任意适合跳用call()方法去执行。那么这和普通的方法又什么区别呢。首先在Ruby中是可以将方法作为另一个方法的参数的， 但是作为参数的方法会立即执行，然后将其返回的参数作为参数传给另一个方法，也就是说本质上并没有达到传递方法的目的，因为作为参数的方法并没有在另个一个方法中实现调用，而仅仅是即时的运算而已。 Proc里有一个很重要的操作符“&”，绝大多数情况下，在方法中可以通过yield立即执行一个块，但是有两个情况yield却很难应付。</p>
+<br>
+<ul><li>把Block传给另一个方法
+</li><li>把Block转换成Proc
+</li></ul>
+<br>
+<p>所以&的作用是将一个Proc对象变成一个块。因为Proc对象可以在方法之间传递，去掉&之后又变成一个普通的块，可以立即执行。而所以Proc，包括后面会提到的Lamda使得Ruby很容易实现就可以实现高阶函数，而高阶函数则是Ruby函数式编程得基础</p>
+<br>
+<pre><code class='code-multiline'>  def method1
+	yield(1)
+  end
+
+  def method2(a, &b)
+	puts "#{a} is the first parameter"
+	puts b.class
+	puts b.call(2)
+	puts method1(&b)
+  end
+
+  method2("a") {|x| x += 1}</code></pre>
+<p><br></p>
+<p>上面得代码输出为，</p>
+<br>
+<pre><code class='code-multiline'>  a is the first parameter
+  Proc
+  3
+  2</code></pre>
+<p><br></p>
+<p>&暗示方法这里传递的将是一个Block，而且这个块在&的作用下称为了一个Proc对象，可以在方法之间传递。值得注意的是携带&的参数只能位于方法参数列表从左到右的最后一个。 与&对应的是proc方法和lamda方法，他们的作用是将块转化成一个Proc对象，按照Ruby惯例，proc生成的Proc是普通Proc，而lamda生成Proc称为lamda。</p>
+<br>
+<pre><code class='code-multiline'>  dec = proc {|x| x -= 1}
+  dec.call(1)	 # 结果 0
+
+  inc = lamda {|x| x += 1}
+  inc.call(1) # 结果2</code></pre>
+<p><br></p>
+<p>值得注意的是，proc在Ruby 1.9之后的版本中，proc是Proc.new 的别名，而在Ruby 1.8中，实际上Kernel.lambda的别名。有点乱。 lambda 和 proc （Proc.new) 有两个不同的地方，</p>
+<br>
+<ol start="1"><li>lambda 对参数个数要求严格，当调用lambda时，必须给对参数格式，而proc对于参数格式没有要求。
+</li></ol>
+<br>
+<pre><code class='code-multiline'>   obj1 = lambda {|a, b| [a, b]}
+   obj2 = proc {|a, b| [a, b]}
+
+   obj1.call(1) # 参数未给对
+   obj2.call(1, 2) # ［1，2］
+
+   obj2.call() #[nil, nil]
+   obj2.call(1, 2) #[1, 2]</code></pre>
+<p><br></p>
+<ol start="2"><li>return 在lambda中表示从lamda中返回，而在proc中则表示从定义Proc的作用域中返回。
+</li></ol>
+<br>
+<pre><code class='code-multiline'>  obj = lambda {return "abc"}
+  obj.call # "abc"
+
+  obj = proc {return "abc"}
+  obj.call # 不能从顶级作用域中返回.</code></pre>
+<p><br></p>
+<h3>结束</h3>
+<p>全文结束。</p>
+<br>
+<h1>使用Opencart来搭建私家电商网站</h1>
+<br>
+<p>本文主要介绍在Mac环境下如何构建LAMP环境，然后基于Opencart来构建私家电商网站.</p>
+<br>
+<h3>1. LAMP on Mac</h3>
+<p>Mac 作为Unix系列最耀眼的孩子之一，拥有Unix的优良血统，这点真的很重要，也就是因为这一点，Mac和Linux一样成为程序员的最佳工作平台。好吧，闲话依然少叙，最近准备接一个小项目，是一个电商网站，我们准备基于<a href="http://www.opencart.com/">Opencart</a>,由于Opencart本身是 php 的框架，所以*AMP(Linux/Unix, Apache, MySql, PHP)是必须的基础架构了，所以让们来看看Mac下如何安装AMP吧。</p>
+<br>
+<h4>Apache</h4>
+<p>Mac 自带有Apache,所以做一些简单的设置，就可以满足我们的需求了.</p>
+<br>
+<pre><code class='code-multiline'>$  apachectl -v
+Server version: Apache/2.2.26 (Unix)
+Server built:   Dec 10 2013 22:09:38</code></pre>
+<p><br></p>
+<p>Apache 的默认主目录是在home，我们可以设定在适合我们方便开发的地方。</p>
+<br>
+<pre><code class='code-multiline'>$ cd ~/
+$ mkdir Sites</code></pre>
+<p><br></p>
+<p>然后修改<i>etc</i>apache2/httpd.conf让主目录为~/Sites</p>
+<br>
+<pre><code class='code-multiline'>DocumentRoot “/Users/huangmh/Sites/”
+&lt;Directory “/Users/huangmh/Sites”&gt;
+     Options Indexes MultiViews
+     AllowOverride All
+     Order allow,deny
+     Allow from all
+&lt;/Directory&gt;</code></pre>
+<p><br></p>
+<p>然后重启我们的Apache就好了。</p>
+<br>
+<pre><code class='code-multiline'>$ sudo apachectl restart</code></pre>
+<br>
+<h4>PHP</h4>
+Mac 本身也自带了php了，很多人为了良好的控制版本，都采用<a href="http://brew.sh/">brew</a> 来重新安装，brew 这是包管理工具中的皎皎者，太好用了，所以Ruby的社区是最才华横溢的，对，没错，我就是Ruby的忠诚粉丝。但是我们使用Mac 本身自带的php就好了。但是值得注意的是，如果安装php的一些拓展的话，最好才看一下php的版本。
+
+<pre><code class='code-multiline'>$ php -v
+ PHP 5.4.24 (cli) (built: Jan 19 2014 21:32:15)
+ Copyright (c) 1997-2013 The PHP Group
+ Zend Engine v2.4.0, Copyright (c) 1998-2013 Zend Technologies</code></pre>
+<p><br></p>
+<p>当发现自己安装的有些模块没有load的好的话，那么可以在查看<i>etc</i>php.ini文件是否以及load相应的.so文件.</p>
+<br>
+<h4>MySql</h4>
+<p>MySqle, Mac 是没有预装的，我们可以通过万能的brew来安装.</p>
+<br>
+<pre><code class='code-multiline'>$ brew install mysql</code></pre>
+<br>
+之后设定一下root用户密码。
+
+<pre><code class='code-multiline'>$ mysql -u root -p</code></pre>
+<br>
+至此，我们就完成了AMP的安装，可以进行Opencart安装了。
+
+<h3>2. 安装Opencart</h3>
+Opencart 的安装和Wordpres一样，都非常的简单，在基础环境（也就是Apache, PHP, Mysql) 已经具备的情况下, 安装一般都不会有什么问题。其实只要确定你已经设置好了MySql和PHP的相关拓展，那么安装就是剩下点击鼠标的事情了。好吧，但是还是让我们慢慢来试试吧。
+
+<h3>MySql</h3>
+Opencart 的相关数据库设置，首先我们确定一下用户名和密码，这会成为以后Opencart的专用数据库，也是以后管理员经常要进行交互的。让我们来创建一下opencart的数据库和用户吧
+
+<pre><code class='code-multiline'>$mysql -u root -p # 输入你的root密码之后进入mysql的shell
+
+mysql&gt; CREATE DATABASE opencart; # 创建数据库
+mysql&gt; CREATE USER opencartuser@localhost; # 创建用户
+mysql&gt; SET PASSWORD FOR opencartuser@localhost= PASSWORD(“输入你的密码”); # 创建用户的密码
+mysql&gt; GRANT ALL PRIVILEGES ON opencart.* TO opencartuser@localhost IDENTIFIED BY ‘你的密码’; # 授权给用户
+mysql&gt; FLUSH PRIVILEGES; # 是权限生效
+</code></pre>这样就拥有了一个Opencart的数据库。
+
+<h3>Opencart的安装</h3>
+从［github](<a href="http://www.github.com/">http://www.github.com/</a>)上直接clone下来Opencart就好了
+
+<pre><code class='code-multiline'>$ git clone https://github.com/opencart/opencart.git</code></pre>
+<br>
+然后将upload的目录移到我们的Apache主目录下方即可
+
+<pre><code class='code-multiline'>$ mv opencart/upload ~/Sites/opencart
+$ cd ~/Sites/opencart/
+$ cp config-dist.php config.php
+$ cp admin/config-dist.php admin/config-dist.php</code></pre>
+<p><br></p>
+<p>然后访问 <a href="http://localhost/opencart">http://localhost/opencart</a>, 此时，你立即可以看到你的安装环境是否已经具备，如果没有具备，作为相关的设置之后即可完成安装了。</p>
+<br>
+<h3>后续</h3>
+<p>将研究其源代码，进行相关的定制。Opencart作为php中比较成熟的MVC框架，阅读起来应该还可以。</p>
+<br>
+<h1>在Rails之外使用ActiveRecord</h1>
+<br>
+<p>ActiveRecord做为Rails的核心组件，也是最优秀的ORM框架之一，Ruby社区的好东西真是多啊，而每一样都 够我研究好一阵子。这就是Ruby最好玩的地方。当第一次使用Rails的时候，我就一直想着如何构建一个自己类Rails框架呢，就当着一个练习也是好，只有这样才能真正的理解Rails的美。 Rails作为漂亮的MVC框架，它也是由很多组件来构建出来的。而ActiveRecord则是MVC中M（Model）的支撑组件。它屏蔽了繁复的数据库操作，将它们都映射成类的方法，每一个类对应着数据库中的表，而类的每一个实例这是对应着表的一行，而且实例的属性则是表的每一列。</p>
+<br>
+<p>为了在Rails之外使用ActiverRecord，我们首先要</p>
+<br>
+<pre><code class='code-multiline'>$ gem install activerecord
+</code></pre>我想用我最近写的一个小工具来简单说说ActiveRecord的用法,简单介绍一下我的小工具：由于我们部门是软件工程部，负责着公司大多数产品的开发，测试，发布等等，没有运行的任务成百上千，所使用的工具也很多，定制的脚本更是不计其数，但是我发现这些程序的运行没有一个很好的反馈机制，结果的分布是零散的，这样所导致的结果是我们每天下班之前对于这些job的运行状况不好收集，不能够很好的向美国的同事进行交接。 所以我要实现的是一个集中的任务状态管理系统，我首先把这个需求简化成:我只需要一个任务的回报中心，每一个运行的程序隔一段时间可以向这个任务管理服务器进行回报，服务事实将这些程序的运行状态进行更新，现实在web页面上，我们可以良好的进行监控。
+
+那么我们就可以把模型定义为：每一个账户有很多的任务。所以我们需要两张表：user 和 task, 对应到Ruby，也就是我们需要两个类: User 和 Task, 它们的关系是
+
+<pre><code class='code-multiline'>class User &lt; ActiveRecord
+    has_many :tasks
+end
+
+class Task &lt; ActiveRecord
+    belongs_to :user
+end
+</code></pre>也许你已经注意到了，我们继承了ActivRecord这个类，而其中的 has_many 和 belongs_to 都是类方法，和attr_reader, attr_writer 类似。这样ActiveRecord就一定自动帮你帮User和Task数据库中的表，而属性则和数据库中的列进行了映射. 当然我们要建立一个数据库。
+
+<pre><code class='code-multiline'>  def connect_db
+    activerecord::base.establish_connection(:adapter =&gt; "sqlite3", :database =&gt; "test.db")
+  end
+
+  # ++
+  # creat table in database
+  # ++
+  def setup_user_table
+    activerecord::schema.define do
+      drop_table :users if table_exists? :users
+      create_table :users do |table|
+        table.column :name, :string
+        table.column :email, :string
+      end
+    end
+  end
+
+  def setup_task_table
+    activerecord::schema.define do
+      drop_table :tasks if table_exists? :tasks
+      create_table :tasks do |table|
+        table.column :user_id, :integer
+        table.column :name, :string
+        table.column :status, :string
+      end
+    end
+  end</code></pre>
+<p><br></p>
+<p>这里我们采用的sqlite3作为数据库，建立两张表，User拥有名字和email两个属性，而Task则拥有所属的user，名字，状态三个属性。通过这三个方法，我们就快速的建立两个表，而之前的两个类则自动已经和这两个表映射。以后对于数据库的任何操作都可以通过类的来进行。</p>
+<br>
+<h1>我要结婚啦</h1>
+<br>
+<h3>已至未至</h3>
+<p>二零一四年十月一日（甲午年九月初八）： 安徽宣城</p>
+<br>
+<p>二零一四年十月二十七日 （甲午年润九月初四）：贵州兴义</p>
+<br>
+<p>二零一四年十一月二十二日 （甲午年十月初一）： 中国上海思贤路1129弄西林花园</p>
+<br>
+<p>距离很远，心灵很近。</p>
+<br>
+<p>何时何地，因为情义。</p>
+<br>
+<h3>遇见</h3>
+<p>魔都是壹個比較適合遇見的城市</p>
+<br>
+<p>因為每個人都在尋找</p>
+<br>
+<p>有的尋找過去,有的人的尋找未來，有的人尋找夢想，有的人尋找生活，而遇見會發生兩個人在尋找相同的東西：愛.</p>
+<br>
+<p>在那七月份的地鐵口</p>
+<br>
+<h3>求婚</h3>
+<p>那天，小明壹直想著如何讓小平不要生氣，因為昨天小明做了壹件很愚蠢的事情.</p>
+<br>
+<p>然後，小明就帶著三十五塊錢去小馬路的地下小店買了壹支戒指，擔心錢不夠，還拉上丹陽師傅壹起去。最後選定了壹個很漂亮的戒指：價格三十五人民幣。</p>
+<br>
+<p>終於熬到下班了。</p>
+<br>
+<p>小明和小平在長寧路的某個小廣場上，看著人流，小明已經忘了都在聊什麽，因為小明心裏壹直等著小平的電話響.</p>
+<br>
+<p>而褲兜裏的戒指還蹦吇蹦吇的跳。</p>
+<br>
+<p>小平的電話準時的在20:30想起了。</p>
+<br>
+<p>“妳好，這裏是東方廣播電臺, 請問妳是小平嗎”</p>
+<br>
+<p>“是的”</p>
+<br>
+<p>“小平，妳好，小明委托我想向妳說，他希望妳可以原諒他昨天讓妳不開心，小明同學想了壹晚都沒有想好如何讓妳可以開心起來。</p>
+<br>
+<p>所以他想對妳說，妳願意嫁給他，他希望可以用壹生壹世來補償妳昨天的不開心。”</p>
+<br>
+<p>“額...”</p>
+<br>
+<p>“您願意嗎，小平同學，我們的聽眾朋友等著妳的回答”</p>
+<br>
+<p>"額，我願意"</p>
+<br>
+<p>然後我將三十五的戒指帶到小平的手指上。</p>
+<br>
+<h3>结婚</h3>
+<p>其實小明不是那麼熱衷於婚禮的各種風俗和形式。</p>
+<br>
+<p>各種各洋的儀式讓自己覺得婚禮像是表演。</p>
+<br>
+<p>父親母親還是希望可以遵照傳統</p>
+<br>
+<p>媳婦取進門必須要按照規矩來</p>
+<br>
+<p>這也許是父母自小到大以來對小明唯壹的約束了</p>
+<br>
+<p>所以小明就和小平開始籌備這場婚禮</p>
+<br>
+<p>但是沒有想到來的這麼快</p>
+<br>
+<p>感謝中國的幅員遼闊</p>
+<br>
+<p>讓我們有這場跨越千裏的婚禮</p>
+<br>
+<p>小平的老家在安徽涇縣</p>
+<br>
+<p>小明的老家在貴州興義</p>
+<br>
+<p>體驗兩種不同的婚禮傳統是种不壹樣的體驗。</p>
+<br>
+<p>當然小明和小平也熱切的希望</p>
+<br>
+<p>兒時的玩伴，校園的同窗，深情的朋友，</p>
+<br>
+<p>共事的小夥伴和大夥伴們能夠蒞臨魔都祝福我們。</p>
+<br>
+<h3>看看我们的照片</h3>
+<p>猛击<a href="http://minghe.me/marry/pictures/">更多</a></p>
+<br>
+<p>我和你</p>
+<br>
+<br>
+<h1>一个想法到MVP的历程</h1>
+<br>
+<p>我觉得自己天生喜欢做产品。希望这是这篇文章唯一的废话。</p>
+<br>
+<h4>想法</h4>
+<p>有一天我和老同学何钞聊天，他和我说到。因为我曾经和他说过我和同事正在做一些小产品玩玩，也许他希望我们可以试试这样的产品。对新闻按正、负面进行分类，这个小小的想法让我一下着了迷，因为：</p>
+<blockquote>
+<p>1. 这个想法足够的小。</p>
+<p>2. 这个想法的确有人需要。</p>
+</blockquote>
+<br>
+<p>所以我一下控制不住想立即去实现它。</p>
+<br>
+<h4>准备</h4>
+<p>我自己首先简单的思考了一下大致的实现思路：</p>
+<br>
+<blockquote>
+<p>1. 新闻获取</p>
+<p>2. 新闻分类</p>
+<p>3. 新闻分发</p>
+</blockquote>
+<br>
+<p>由于新闻的获取和分类是耗时的操作，在客户端每次启动app才去进行是合理，所以应该这样： 在server端按照一定的时间间隔去各大新闻网站上去抓去新闻，然后对新闻进行分类存储，最后客户通过REST API从server上获取相应的新闻进行对用户进行分发。 获取新闻容易，但是新闻的分类是一个难点，好吧，向南洋理工大学研习机器学习@大手同学咨询一下。没想到他已经转到了计算机视觉方向了，NLP和ML已经不是他的强项了，不过通过简单讨论了一下，我大致形成了这样的解决思路：分词 <span class='arrow'><svg width="11px" height="10px" viewBox="0 0 11 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" >    <g id="right-arrow" >        <path d="M1.77635684e-14,5 L9,5" id="rod" stroke="#000000" stroke-width="2" ></path>        <path d="M11,5 L6,0.5 L6,9.5 L11,5 Z" id="point" fill="#000000"></path>    </g></svg></span> 词性判断 <span class='arrow'><svg width="11px" height="10px" viewBox="0 0 11 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" >    <g id="right-arrow" >        <path d="M1.77635684e-14,5 L9,5" id="rod" stroke="#000000" stroke-width="2" ></path>        <path d="M11,5 L6,0.5 L6,9.5 L11,5 Z" id="point" fill="#000000"></path>    </g></svg></span> 评分。具体的说就是首先对句子进行分词，并且句子的整体分数初始化为0，然后对每一个词语进行正负面词性的判断，如果为正面词汇，该句子总分＋1，如果为负面词汇，该句子总分－1，否则该句子总分＋0.最后总分的正负值决定了这个句子的正负面的程度。</p>
+<br>
+<h4>实现</h4>
+<br>
+<ul><li>新闻获取
+</li></ul>
+<br>
+<p>原本打算写一个爬虫自己去抓取各大新闻站点的新闻，后来发现网易新闻的RSS源里已经包含了最新的新闻的所有基本信息:</p>
+<br>
+<blockquote>
+<p>* title: 新闻的标题</p>
+<p>* description: 新闻的大致内容</p>
+<p>* guid: 新闻的id</p>
+<p>* pubDate: 新闻的发布时间</p>
+<p>* link: 新闻的页面链接</p>
+<p>* category: 新闻的类别</p>
+</blockquote>
+<br>
+<p>遂决定采用直接解析RSS的方法去获取新闻的列表。用一小段简单的脚本去获取和处理RSS。</p>
+<br>
+<ul><li>新闻分类
+</li></ul>
+<br>
+<p>我们已经有了如下的解决思路：分词 <span class='arrow'><svg width="11px" height="10px" viewBox="0 0 11 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" >    <g id="right-arrow" >        <path d="M1.77635684e-14,5 L9,5" id="rod" stroke="#000000" stroke-width="2" ></path>        <path d="M11,5 L6,0.5 L6,9.5 L11,5 Z" id="point" fill="#000000"></path>    </g></svg></span> 词性判断 <span class='arrow'><svg width="11px" height="10px" viewBox="0 0 11 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" >    <g id="right-arrow" >        <path d="M1.77635684e-14,5 L9,5" id="rod" stroke="#000000" stroke-width="2" ></path>        <path d="M11,5 L6,0.5 L6,9.5 L11,5 Z" id="point" fill="#000000"></path>    </g></svg></span> 评分。具体的说就是首先对句子进行分词，并且句子的整体分数初始化为0，然后对每一个词语进行正负面词性的判断，如果为正面词汇，该句子总分＋1，如果为负面词汇，该句子总分－1，否则该句子总分＋0.最后总分的正负值决定了这个句子的 正负面的程度。 那么我们是不是要对整篇新闻进行这样的评分分类呢，现阶段我们并不需要那么做，我们只需要对新闻的标题进行正负面的评分然后分类即可。原因是:新闻标题基本上决定了一篇新闻的情绪，从标题我们可以大体上知道一则新闻是正面新闻、普通新闻还是负面新闻。 好吧，那么我们就开始对新闻标题进行分词，开源的分词系统很多，而且性能绝对已经满足了我们这种初级产品的需求，简单的试了一下@梁博他们实验室的分词器，效果很不错，所以分词这个看起来很复杂的工作我们只要一条命令就搞定了:</p>
+<br>
+<blockquote>
+<p>curl -s <a href="http://api.pullword.com/get.php%5C?source%5C=#%7Btitle%7D%5C&param1%5C=0%5C&param2%5C=0">http://api.pullword.com/get.php\?source\=#{title}\&param1\=0\&param2\=0</a></p>
+</blockquote>
+<p>那么如何对新闻进行评分呢，我们必须得知道哪些词语是正面、负面或是中性的。Google了一下我决定采用台湾大学自然语言处理实验室的NTUSD。 这个词典裡面包含了正面以及负面情緒的词语集，正面情緒大约有2800个，负面情绪8000个，总共大约10000个词语. 有了这个词典，我们就可以对一个句子进行正负面程度的评分了，比如对于这则新闻标题”小明很愤怒的杀死了很多人”， “愤怒”和“杀死”都是对应词典中的负面词汇，所以这条新闻的评分将是－2。</p>
+<br>
+<ul><li>新闻的分发
+</li></ul>
+<br>
+<p>获取和分类过后的新闻直接存储到MySQL数据库中，这么牛逼的新闻分类，要尽快上线给大伙试用一下才好啊。好吧，快速的用Rails搭建一个纯的APi server， 然后写一个极其简单的iOS app给大伙试试吧。</p>
+<br>
+<h4>最后</h4>
+<p>talk is cheap, show me the code. 无码无真相.</p>
+<br>
+<blockquote>
+<p><a href="https://github.com/metrue/nextNews/">GitHub</a></p>
+<p><a href="https://itunes.apple.com/us/app/xin-wen/id932228370?ls=1&mt=8">AppStore</a></p>
+</blockquote>
+<p>这是一个一星期左右的作品，加上本人技术菜，求砖头轻拍哦。求砖头轻拍哦</p>
+<br>
+<h1>Block in Ruby and Objective C</h1>
+<br>
+<p>在 Ruby 和 Objective C 中都存在 block 这个很好玩的东西， 在 Javascript 和其他的语言中，一般称为闭包 ( closure ).  而其本质基本上是一样: bock<i>closure 是一个函数或者指向函数的指针，以及其执行的上下文变量。但是在不同的语言中， block 的具体体现略为不同，Ruby 的 block 非常的简洁易懂， 而 Objective C 的 block 基本上保持 C 语言中函数指针的形式。 无论在 Objective C 还是 Ruby， 或者其他语言中，block</i>closure 的作用都是: 穿越作用域 和 完成特定的运算功能。本文我们就来对比一下 block 在 Ruby 和 Objective C 中是如何实现这两个功能的。</p>
+<br>
+<h3>Block 的基本形式</h3>
+<p>Ruby 中的 Block 只有两种形式:</p>
+<br>
+<ul><li>大括号包围的形式
+</li></ul>
+<pre><code class='code-multiline'>{ block body }
+do
+    block body
+end</code></pre>
+<p><br></p>
+<p>Ruby 中几乎所有的东西都是对象，但是上面的 Block 却不是，那么 Ruby 是否可以让 Block 也成为一种对象呢，这样就可以将 Block 保存起来以后使用了。 当然是有的，Proc 和 Lambda</p>
+<br>
+<pre><code class='code-multiline'>dec = proc { |x| x -= 1 }
+dec.call(1) ==&gt; 0</code></pre>
+<p><br></p>
+<pre><code class='code-multiline'>inc = lambda { |x| x += 1 }
+inc.call(1) ==&gt; 2
+</code></pre>Proc 和 Lambda 的区别是: Lambda 由对参数格式要求严格，也就是调用 Lambda 的使用参数必须和创建 Lambda 的时候一致，其次，return 在 Lambda 中表示从 Lambda 中返回，而在Proc 则表示从定义 Proc 的作用域中返回。所以如果你在  中定义 Proc，在 Proc 中使用 return 的时候会遇到这样的错误:
+
+<pre><code class='code-multiline'>in `block in &lt;main&gt;’: unexpected return (LocalJumpError)&lt;/main&gt;`</code></pre>
+<br>
+而在 Objective C 中 Block 看起来很纠结，手写起来太容易出错了， 我一般是这样来记忆 Objective C 中的 Block:
+
+<ul><li>当 Block 作为左值时
+</li></ul>
+<br>
+<pre><code class='code-multiline'>returnType (^blockName)(parameterTypes)</code></pre>
+<br>
+<ul><li>当 Block 作为右值时:
+</li></ul>
+<br>
+<pre><code class='code-multiline'>^returnType(parameters) { blockBody }</code></pre>
+<br>
+基于上面的原则我们可以很快写出 Block 的几种基本使用场景:
+
+<ul><li>作为局部变量
+</li></ul>
+<br>
+<pre><code class='code-multiline'>returnType (^blockName)(parametertypes) = ^returnType(parameterts) { blockBody}</code></pre>
+<br>
+<ul><li>作为属性
+</li></ul>
+<br>
+<pre><code class='code-multiline'>@property (nonatomic, copy) returnType (^blockName)(parameterTypes)</code></pre>
+<br>
+<ul><li>作为定义方法时候的参数(parameter)
+</li></ul>
+<br>
+<pre><code class='code-multiline'>- (void)someMethodThatTakesABlock:(returnType (^)(parametertTypes))blockName;</code></pre>
+<br>
+<ul><li>作为调用方法时候的传递参数(argument)
+</li></ul>
+<br>
+<pre><code class='code-multiline'>[someObject someMethodThatTakesABlock:^returnType(parameters) { blockBody }];</code></pre>
+<br>
+<ul><li>使用 typedef 定义一个 Block 类型
+</li></ul>
+<br>
+<pre><code class='code-multiline'>typedef returnType (^TypeName)(parameterTypes);
+TypeName blockName = ^returnType(parameterts) { blockBody };</code></pre>
+<p><br></p>
+<ul><li>inline Block
+</li></ul>
+<p>这中 Block 正如 Block 的字面意思一样，就是一个代码段，也分为有参和无参两种</p>
+<br>
+<ul><li>有参
+</li></ul>
+<br>
+<pre><code class='code-multiline'>^returnType (parameterTypes) {
+    blockBody;
+}(parameterts);</code></pre>
+<p><br></p>
+<ul><li>无参:
+</li></ul>
+<br>
+<pre><code class='code-multiline'>{
+    blockBody;
+}</code></pre>
+<p><br></p>
+<h3>Block 的威力</h3>
+<p>正如前面说的，Block 的作用可以总结为: 穿越作用域，以及完成特定运算。</p>
+<br>
+<ul><li>穿越作用域
+</li></ul>
+<br>
+<p>对于 Ruby 来说，分隔作用域的三道门为: class, module, def。 为了是得变量可以穿越这三道门，我们可以使用 Class.new 代替 class 去定义一个类， 使用 Module.new 去代替 module 去定义一个 module，以及使用 define_method 去代替 def 去定义个方法，这样上下文的变量就可以在定义中得到使用了。</p>
+<br>
+<pre><code class='code-multiline'>var = “foo”
+MyClass = Class.new do
+  puts “#{var} is in MyClass now”
+end</code></pre>
+<p><br></p>
+<p>他们的区别是，class 和 module 定义中的代码会马上执行，而方法定义中的代码之用在调用的时候才会执行。</p>
+<br>
+<p>对于 Objective C 来说，作用域的概念基本上都是继承于 C 的，和本文内容相关时 blockBody 如何访问上下文变量的问题, 基本上和 Ruby 一样。</p>
+<br>
+<pre><code class='code-multiline'>NSString x = @”hello world”;
+
+^{
+  NSLog(@“%@”, x);
+}</code></pre>
+<p><br></p>
+<ul><li>完成特定的预算
+</li></ul>
+<br>
+<p>由于可以在 Block 的 blockBody 完成任意的操作，所以 Block 无论是在 Ruby 还是 Objective C 中都有这广泛的运用，也是 Ruby 和 Objective C 中的一等公民。比如Ruby 中内置的数据类型的绝大多数操作都支持 Block，如 Array 中的 each, Hash中的each_pair 等，而在 Rails, Jekyll, Grape 等优秀的基于 Ruby 的框架中，Block 的使用就更加频繁和优雅了。 同样在 Objective C 中，可以说没有 Block 就没有Objective C, iOS 中 Cocoa 里面大量的设计模式都必须有 Block 作为支撑。而大量的优秀的开源框架更是将 Block 用的微妙微翘, 比如我们经常使用的 AFNetworking 框架，在 HTTP GET 的 succecss 和 failure 的处理函数都是使用的是 Block. 所以深入理解 Block 是学习 Ruby 和 iOS 开发的基础，甚至对于理解其他语言如 Javascript 都是非常有意义的。</p>
+<br>
+<h1>Ruby:那些优美的东西-语法层面</h1>
+<br>
+<p>我对优美的东西真实一点抵抗力都没有啊，其实学习 Ruby 看的第一本书是 "Ruby 元编程", 一下子就陷入了 Ruby 的坑，</p>
+<p>"Ruby 元编程" 是一本把 Ruby 的与众不同的特性展示的最好的一本书，整本书一句废话都没有，无论是 Ruby 刚入门还</p>
+<p>是 Ruby 老手，我都特别推荐这本书，在看这本书之后，你才发现你开始深入体会了 Ruby 让程序员变得快乐的真正意义。</p>
+<br>
+<p>我不敢说也不是 Ruby 老手，我只是单纯喜欢这门优美的语言，本文我想从语法的层面来展示 Ruby 那些优美的细节。当</p>
+<p>然我更希望自己后续可以写一篇 "Ruby: 那些优美的的地方-设计层面"</p>
+<br>
+<h3>循环</h3>
+<br>
+<ul><li>for
+</li></ul>
+<br>
+<p>几乎对于所有的编程语言而言，for 语句的存在都是为了遍历数组，而在 Ruby 中遍历数组的方式可以有</p>
+<br>
+<pre><code class='code-multiline'>  for i in array
+    code block
+  end
+或者
+  array.each do |element|
+    code block
+  end
+或者
+  array.each_with_index do |element, index|
+    code block
+  end
+或者</code></pre>
+<p><br></p>
+<p>其实对于循环，Ruby 有非常漂亮的其他语法.</p>
+<br>
+<ul><li>upto
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  1.upto(10) do |i|
+    code block
+  end</code></pre>
+<p><br></p>
+<ul><li>downto
+</li></ul>
+<pre><code class='code-multiline'>  10.downup(1) do |i|
+    code block
+  end</code></pre>
+<p><br></p>
+<ul><li>.. 运算符: 创建从开始到结束的范围
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  (1..10).each do |i|
+    code block
+  end</code></pre>
+<p><br></p>
+<ul><li>... 运算符: 创建从开始到结束的范围, 但是不包含结束
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  (1...10).each do |i|
+    code block
+  end</code></pre>
+<p><br></p>
+<h3>分支控制</h3>
+<br>
+<ul><li>if
+</li></ul>
+<br>
+<p>Ruby 的 if 语句和其他语言基本上没有区别，比较有意思的可以使用 short if，在很多场景下很方便.</p>
+<br>
+<pre><code class='code-multiline'>  if expression
+    code block
+  end
+
+或者
+  if expression
+    code block
+  elsif expression
+    code block
+  end</code></pre>
+<p><br></p>
+<p>Short if 如</p>
+<br>
+<pre><code class='code-multiline'>  variable = (expression) ? ( expression-if-true ) : ( expression-if-false)</code></pre>
+<br>
+<ul><li>case
+</li></ul>
+<br>
+<p>case 语句非常有用，当对表达的结果有可预知的范围时，用 case 语句非常的方便.</p>
+<br>
+<pre><code class='code-multiline'>  case expression
+  when expression1
+    code bloc
+  when expression2
+    code bloc
+  else
+    code bloc
+  end</code></pre>
+<p><br></p>
+<ul><li>unless
+</li></ul>
+<br>
+<p>还有比较好玩的 unless 语句, 它和 if !expression 实际上是等价.</p>
+<br>
+<pre><code class='code-multiline'>  unless expression
+    code bloc
+  end</code></pre>
+<p><br></p>
+<ul><li>while, until
+</li></ul>
+<p>也和其他语言如 Shell 是一样的.</p>
+<br>
+<pre><code class='code-multiline'>  while expression
+    code bloc
+  end
+
+  until expressino
+    code bloc
+  end</code></pre>
+<p><br></p>
+<h1>YIQIWAN.US 的诞生记</h1>
+<br>
+<p><a href="http://yiqiwan.us">yiqiwan.us</a> 是一个很简单的项目，不过从中我学习了:</p>
+<br>
+<pre><code class='code-multiline'>其实不需要任何条件都具备了才开始行动，行动了之后你才真正明白了你需要哪些条件。</code></pre>
+<br>
+<pre><code class='code-multiline'>任何工程上面的事情，只有去量化结果，你才知道是否有改进。</code></pre>
+<br>
+<pre><code class='code-multiline'>分享让你快乐，分享让你进步。</code></pre>
+<br>
+<h3>起始</h3>
+<a href="http://v2ex.com">v2ex.com</a> 是一个群体讨论质量不错的社区，相对于 Ruby China 来说，这里的讨论更加的多元化一些，这也就是我最近为什么都是
+优先在 <a href="http://v2ex.com">v2ex.com</a> 发帖的原因，这里有更多的交流和互动。而 <a href="http://yiqiwan.us">yiqiwan.us</a> 的但是就是来源于此的。
+
+<a href="http://www.v2ex.com/member/jianzong">@jianzong</a> 在 <a href="http://v2ex.com">v2ex.com</a> 发帖<a href="http://www.v2ex.com/t/172056">"点评一个人或者 2-3 人小团队的工作、学习场所"</a>.
+我觉得挺好的想法，特别是对于程序员来说，业余时间在家写代码的效率确实不是很高，有时候会想着出去咖啡店或者图书馆写代码。
+但是如何找到一个合适的咖啡店和图书馆，其实不是很容易，有的太吵，有的太贵，有的网络速度不好，有的人多拥挤。所以我就想说，要不咱们就在 Github 上维护
+一个 list 吧，专门收藏程序员们自己喜欢的写代码场所，大家一起来添加。
+
+<h3>诞生</h3>
+然后一个关于适合程序员写代码的场所收集的表单的 GitHub 仓库就建好了，名约<a href="https://github.com/metrue/nice-place-for-coding">"nice-place-for-coding"</a>,
+然后不断的有同学 fork 然后添加地点，也有不少的同学只是 star 和收藏，后来有同学发了一个 issue 说，"Don't limit yourself as a coder", 具体信息是说
+我们虽然是程序员，但是不要什么事情都 bind 到 Github 上面，还有其他方法来完成这件事情，比如 "街旁", 当时我还觉得 Github 很方便啊，大家添加的时候发一个
+PR 就好了。直到后来，我发现为这个 list 添加信息的人越来越少了，我才知道，虽然这是很简单的东西，但是它也是一个产品，作为一个产品，如果不能让用户很简单的使用的话，那么不会有用户喜欢它，更何况这个产品还是需要用户去做贡献的，所以为了让用户可以为这个 list 添加更多的地点，我需要准备一个简单易用的添加页面，
+同时为了让用户可以很快看到自己所处的城市有哪些适合写代码的地方，我需要准备一个按城市区分的地点列表页面。所以
+
+<h3>发展</h3>
+所以我就开始为这个项目写一个简单的网站。通过简单的分析，我就确定了用 AngularJS + LeanClound 的方式来完成这个小项目，因为: 1. 这是一个简单的单页面应用，
+AngularJS 非常适合，其次这是应用的数据非常简单，而且非常结构化，那么没有必要去自己建立一个后代服务器，直接使用 LeanCloud 的存储服务就好了。所以回到上海之后，
+快速的用了大约一下午的时间，将网站大体搭建完毕，又花了一晚上的时候完成了前端样式的调整，最终它变成了这个样子 <a href="http://yiqiwan.us">http://yiqiwan.us</a> .
+
+<h3>后续</h3>
+然后我将网站的建设情况发到 <a href="http://v2ex.com">v2ex.com</a>，事实证明，简单的使用确实让用户乐于去分享，我们现在有了 上海，杭州，深圳，舟山等城市的适合写代码地点的收集，后续希望有
+更多的不同城市的程序员添加他们自己喜欢的地方，为更多的程序员提供便利。
+
+<h3>最后</h3>
+我的代码开源在 GitHub 上，欢迎发PR，让这个网站变成你想要的样子。
+
+<a href="https://github.com/metrue/nice-place-for-coding">https://github.com/metrue/nice-place-for-coding</a>
+
+于此同时可以剧透的是，有同学正在为这个项目写 iOS 的 App， 而另外一个同学正在为其写一个交互式地图的拓展，方便大家对于地点的查询。
+也许这就是社区的力量吧，有一句说的很好:
+
+<pre><code class='code-multiline'>if you want to go fast, go alone
+if you want to go long, go together</code></pre>
+<p><br></p>
+<br>
+<h1>2014年总结</h1>
+<br>
+<p>我写这篇文章的时候，我在从安徽回上海的汽车上。时间是: 2015/04/05，清明节。2015 年都已经过了一个季度了，不过我觉得自己还是应该对 2014 年又一个简单的总结，因为 2014 也许是我生命中最重要的一年了。</p>
+<br>
+<h3>生活</h3>
+<br>
+<ul><li>结婚
+</li></ul>
+<br>
+<ul><li>女儿黄文惜出生了
+</li></ul>
+<br>
+<p>我从一个刚毕业不久的青涩小青年，如今已经已为人父了，有时候觉一切来的好突然，我甚至都没有想过如何让自己去承担。然而我真的从来没有怀疑过这些变化的发生，因为我知道自己是什么样子的人。不过当一切来到我面前的时候，我仍然有一些的缓不过神来。虽然女儿只有两个月，已经学会了伊呀伊呀的自言自语，或者与我聊天。 我喜欢让女儿躺在我的双腿上入睡，直到她进入深睡状态了之后我才把她放到我旁边，盖上棉被。我不希望在她清醒的任何时候觉得自己孤独，我希望她知道任何时候爸爸都在她旁边。</p>
+<br>
+<p>世界上真的有一些事情可以让你忘记所有的辛苦，而对我来说就是，女儿熟睡时候发出的笑声。</p>
+<br>
+<h3>代码</h3>
+<p>有了女儿之后，我写代码的时间越来越少了，不过我每天仍然会尽可能的挤出一些至少一个小时的时间在自己喜欢的项目上面.</p>
+<br>
+<ul><li><a href="http://yiqiwan.us">yiqiwan.us</a>
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  yiqiwan.us 是程序员分享自己业余最喜欢的工作地点的列表，最开始的点子来自和大家在 v2ex 上的讨论，最后快速的用 AngularJS 配合 LeanCloud 实现 MVP，目前仍然在维护。</code></pre>
+<br>
+<ul><li><a href="http://ai.minghe.me">ai.minghe.me</a>
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  ai.minghe.me 是一个对中文文章进行情绪分析的工具，你只要给一个中文文章的 URL, 工具会对文章中好，乐，怒，哀，惧，惊，恶七种情绪的含量进行分析，返回各种情绪的含量值。</code></pre>
+<br>
+<ul><li>iOSonRail
+</li></ul>
+<br>
+<pre><code class='code-multiline'>去年和 Ruby-China 社区的朋友一起维护了一个公众号"ruby程序员"，不定期的分享一些关于 Ruby，Ruby on Rails，移动开发等原创技术文章，至今收获了七百多订阅者。我结合自己平时的开发，写了一个专题"iOSonRails", 介绍如何开发一款一个 Rails 为后端的 iOS App.</code></pre>
+<br>
+<ul><li>nextNews
+</li></ul>
+<br>
+<pre><code class='code-multiline'>这是一款按情绪进行新闻分类的新闻客户端，从前端的 iOS App 到后端的基于 Rails 的 API 服务都是自己一个人完成，从想法到 App 上架，仅仅用了一个月的时间。这个产品虽然还只是一个简单的 MVP， 不过又一次证明了自己快速实现产品的能力，也更深刻的认识到自己最喜欢的还是做产品，build something 也许是我今后生命的主题，我希望这个 something 是自己喜欢，与此同时也是一些人需要，就足够了。</code></pre>
+<br>
+<ul><li>团账
+</li></ul>
+<br>
+<pre><code class='code-multiline'>这是一个让我学习到很多的失败的项目经历，后续我想认真的总结一下这次和朋友的初次合作。</code></pre>
+<br>
+<h3>工作</h3>
+去年，带我的同事离职去 Vmware 了，上海 Site 就只有我一个人做整个产品的支持了，老师的离开让我一下子也离开了原本的舒适区，自己也可以是各种日常工作的开发和维护，逼自己去熟悉产品的各种东西。在和美国同事开会的时候也要认真的听了，庆幸的是和我合作的美国同事经验丰富，在这段时间给了我莫大的帮助。 去年也是 SWE 部门开始对基础架构进行重构，从各个方面对整个部门的 Operations 开始标准化，包括数据库，工具开发，对外数据沟通，已经各种命名都有了统一的 Convention. 自己也参与到了整个项目的构思和现在的代码实现，在很多方面都给了我很大的提高。
+
+<h3>2015</h3>
+
+<ul><li>工作
+</li></ul>
+<br>
+<pre><code class='code-multiline'>将 DevOps 的理念研究的更深入一些，希望可以实现日常工作的全自动化。</code></pre>
+<br>
+<ul><li>nextNews
+</li></ul>
+<br>
+<pre><code class='code-multiline'>希望可以达到 1w 的用户，以此同时，可以能够自给自足。</code></pre>
+<br>
+<ul><li>做一款工具类的 App
+</li></ul>
+<br>
+<ul><li>学习一门非主流的编程语言。
+</li></ul>
+<br>
+<h1>iOS:如何导入XMPPFramework到iOS项目中</h1>
+<br>
+<p>XMPP（Extensible Messaging and Presence Protocol，前称Jabber[1]）是一种以XML为基础的开放式实时通信协议，是经由互联网工程工作小组（IETF）通过的互联网标准。XMPP因为被Google Talk应用而被广大网民所接触, 现在Gtalk已经变成了Hangout，不再支持 XMPP，不过XMPP协议自由、开放、公开的特点仍然有很多的项目在使用它。</p>
+<br>
+<p><a href="https://github.com/robbiehanson/XMPPFramework">XMPPFramework</a> 是Objective C实现的XMPP框架，为iOS/Mac中的IM工具开发听过了非常大的便利. 本文将介绍如何将XMPPFramework导入Xcode项目中.</p>
+<br>
+<h3>开始吧</h3>
+<p>####. 建立一个Single-PageView的项目</p>
+<p>不再多说</p>
+<br>
+<p>####. 从GitHub上clone XMPPFramework</p>
+<br>
+<pre><code class='code-multiline'>  git clone https://github.com/robbiehanson/XMPPFramework</code></pre>
+<br>
+<h4>导入XMPPFramwork.</h4>
+
+<ul><li>CocoaLumberjack: 日志框架
+</li></ul>
+<br>
+<ul><li>CocoaAsyncSocket: 底层网络框架
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  依赖 CFNetwork, Security</code></pre>
+<br>
+<ul><li>KissXML
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  libxml2.dylib</code></pre>
+<br>
+于此同时，再Project level 编辑添加
+
+<pre><code class='code-multiline'>  OTHER_LDFAGES = -lxml2
+  HEADER_SEARCH_PATHS = /usr/include/libxml2</code></pre>
+<p><br></p>
+<ul><li>libidn
+</li></ul>
+<br>
+<ul><li>导入 XMPPFramwork 核心模块
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  Authentication, Categories, Core, Utilities</code></pre>
+<br>
+以及其拓展
+
+<pre><code class='code-multiline'>  Extensions
+</code></pre>他们需要依赖
+
+<pre><code class='code-multiline'>  libresolv.dylib</code></pre>
+<br>
+每一步添加完了之后都要 command + B 来编译一下确认结果, 最后添加 Extensions 的时候还出现 UIImage expect a type 的错误，解决方法是在 XMPP.h 中加入
+
+<pre><code class='code-multiline'>#import &lt;UIKit/UIKit.h&gt;</code></pre>
+<br>
+<h1>Objective-C:内存管理-1</h1>
+
+无论硬件条件如何发展，性能都是我们程序员每一天都要解决的问题，很多初级 Ruby 程序员会说，去他妈的性能，性能能当饭吃吗，我们要的生产效率。但是你知道吗，为了使 Ruby 以及 Rails 成为最具生产效率的语言和 Web 框架，Matz 和 DHH 解决多少底层的性能问题吗。而内存管理则属于性能问题中更为基础的部分，这就是为什么面试的时候为什么热衷于考察候选人对于各种语言的内存管理熟悉程度, 以及算法设计能力，因为这两种能力是区别程序员水平的最佳标准。本文将介绍在 Objective C 中, 内存管理是如何进行的.
+
+<h3>自动引用计数</h3>
+我们在写 C/C++ 语言程序的时候，malloc 和 free, new 和 delete 是对好兄弟，这样可以才能保证内存的正常释放，同样在 Objective C 中，不再使用的内容也是需要我们自己去释放的，对象是否被释放取决于对象的引用计数是否为0. Objective C 中内存管理基于自动引用计数，而自动引用计数的工作思想是:
+
+<ul><li>自己生成的对象自己持有
+</li><li>非自己生成的对象自己也能持有
+</li><li>不再需要自己持有的对象时释放
+</li><li>非自己持有的对象不能释放
+</li></ul>
+<br>
+<p>每一次对象被释放，对象的引用计数自动 -1, 当对象的引用计数为 0， 对象即被废弃. 对应的 Objective C 中的方法如下:</p>
+<br>
+<p>|# | 对象操作 | Objective C 方法 |</p>
+<p>|---| <s>---</s> | <s>------</s> |</p>
+<p>|1| 生成并持有对象 | alloc<i>new</i>copy/mutableCopy|</p>
+<p>|2| 持有对象| retain|</p>
+<p>|3| 释放对象 | release|</p>
+<p>|4| 废弃对象 | dealloc|</p>
+<br>
+<p>所以引用计数对于 Objective C 中的内存管理就极为重要，那么引用计数是如何被管理的呢，对有些语言引用计数是通过内存块头部来管理的。那么做的好处是用少量的代码量级可以完成，而且能够统一管理引用计数和对象内存块。但是在 Objective C 中，引用计数是通过引用计数表来管理的，这样对象内存块的分配就无需分配内存块头部，而且引用计数表纪录中存有内存块地址，可以从记录中追溯到个对象的内存块，这样即使出现了故障导致对象占用的内存块损坏，但只要引用计数表没有被损坏，就能确认各内存块的位置。同时利用工具检测内存泄漏的时候，引用计数表的各记录也有助于检测个对象的持有者是否存在。</p>
+<br>
+<h3>autorealase</h3>
+<p>我们都知道，在 C/C++ 中，局部变量在超出其作用域的时候会被自动废弃。Objective C 中的autorelease 的工作方式和他们类似，它的具体使用方法是:</p>
+<br>
+<ul><li>生成并持用 NSAutoreleasePool 对象
+</li><li>对用已经分配对象的 autorelease 实例方法
+</li><li>废气 NSAutoreleasePool 对象
+</li></ul>
+<br>
+<p>简单的代码示例如下:</p>
+<br>
+<pre><code class='code-multiline'>  NSAutoreleasePool *pool = [[NSAutorelease alloc] init];
+  id obj = [[NSObject alloc] init];
+  [obj autorelease];
+  [pool drain];</code></pre>
+<p><br></p>
+<p>其内部的原理主要当分配的对象调用 autorelease 方法时，pool 将调用自己的 addObject 方法，将对象添加到 pool 的持用对象 array 中，当pool 调用 drain 的时候实际上相当于 obj release，也就是释放对象。</p>
+<br>
+<h3>最后</h3>
+<p>通过上述简介, 相信你对 Objective C 的内存有了一些基础的了解.</p>
+<br>
+<h1>Git-Submodule-的正确姿势</h1>
+<br>
+<p>大多数时候我们的工程中都会使用到其他的项目，也许是自己写的专用模块，也许是第三方的库。如果在自己的工程中对这些项目进行良好的管理呢，在使用 Git 进行版本控制的项目中，我们可以使用 Git Submodule 来进行优雅的管理。</p>
+<br>
+<h3>使用方法</h3>
+<br>
+<ul><li>添加 submodule
+</li></ul>
+<br>
+<p>假如我们想在已有工程中添加第三方项目，我们可以</p>
+<br>
+<pre><code class='code-multiline'>  git submodule add repo_url</code></pre>
+<br>
+初次使用 git submodule 的话，我们可以看到我们的工作目录下会有 .gitmodules, 这里记录的是我们工程用到的项目的 remote url， 以及他们的路径信息。为了统一管理我们的submodules，我们一般会建立一个统一的目录来存放这些submodules。所以一般可以这样做。
+
+<pre><code class='code-multiline'>  mkdir submodules
+  cd submodules
+  git submodule add repo_url</code></pre>
+<p><br></p>
+<p>这样你可以看到你的 submodules 目录中已经自动 pull 出来了哪些 submodules 的代码，但是值得注意的，submodule 项目和我们的工程目录本质上是独立的 git repo。我们的工程只是记录他所以来的项目的版本信息而已, 你可以通过如下命令获取相关信息</p>
+<br>
+<pre><code class='code-multiline'>  git submodule</code></pre>
+<br>
+<ul><li>更新 submodule
+</li></ul>
+<br>
+<p>为了和 submodule 项目保持同步更新，我们需要在主项目进行</p>
+<br>
+<pre><code class='code-multiline'>  git pull</code></pre>
+<br>
+之后进行一次
+
+<pre><code class='code-multiline'>  git submodule update</code></pre>
+<br>
+<ul><li>开发 submodule
+</li></ul>
+<br>
+<p>有时候我们是在工程中直接对 submodule 进行开发的。但是也许你会发现当你 cd 到你的 submodule 的时候，你并不是在 master 分支上，而是处于一种游离的状态 'detached HEAD ...', 所以正确的做法是</p>
+<br>
+<pre><code class='code-multiline'>  git checkout master # 或者其他开发分支
+  git commit -m "message" # 开发了之后可以提交
+  git push</code></pre>
+<p><br></p>
+<p>那么如果忘记了切换到你想要的分支而且你已经做了更新呢， 你可以这样</p>
+<br>
+<pre><code class='code-multiline'>  git checkout master
+  git cherry-pick commit_id # 可能会有conflict，如果有，就先解决
+  git push</code></pre>
+<p><br></p>
+<ul><li>删除 submodule
+</li></ul>
+<br>
+<p>很遗憾的是，Git 并没有 git submodule rm 这样的操作，而且你单独的删掉 submodule 的子目录也是错误，正确的做法是</p>
+<br>
+<pre><code class='code-multiline'>  git rm --cached pato_to_submodule
+  rm -rf path_to_submodule
+
+  然后再 .gitmodules 中删掉相应信息.
+  最后还得在 .git/config 中删掉其相关内容.</code></pre>
+<p><br></p>
+<h3>最后</h3>
+<p>当然很多时候，我们clone别人的项目的时候，如果别人也是使用了 git submodule 的话，我们需要通过下面的方法来 pull 所有的 submodules</p>
+<br>
+<pre><code class='code-multiline'>  git submodule init
+  git submodule update --recursive</code></pre>
+<p><br></p>
+<p>当然也可以直接合并成</p>
+<br>
+<pre><code class='code-multiline'>  git submodule update --init --recursive</code></pre>
+<br>
+<h1>韩国 JeJu 小记</h1>
+
+一些朋友听说我们来济州岛学习驾驶并且已经结束了之后，都希望我可以写一篇攻略，然而我都已经忘记了自己什么时候决定要来济州岛学习驾驶，也忘记了怎么就糊里糊涂选了这个团。所以攻略基本上只有这几点:
+
+<ul><li>选择一家合适的中介
+</li></ul>
+<br>
+<ul><li>带一件外套
+</li></ul>
+<br>
+<ul><li>考试的时候不要紧张
+</li></ul>
+<br>
+<p>那么你一定可以很顺利的就可以完成你的驾驶学习, 拿到一张韩国驾照，一张国际驾照，并且你一定可以自己上路开车了。回到国内之后去车管所预约考科目一，过一周左右之后就可以直接考试，通过之后现场拿国内驾照.</p>
+<br>
+<p>好吧，关于济州岛学习驾驶我想说的只有这么多，我还是来说说我的这次旅行吧。</p>
+<br>
+<h3>JeJu 的海</h3>
+<p>海水很冷，海风很爽，海浪很白; 海边的石头很多形状，海边的灯光很温暖，海边的公路很长，海边的人很安静。</p>
+<br>
+<p>你需要去海边走一走，踩在石头上，感受一下海水，看看奇怪的小虫，多穿一点衣服是好的，若你和我一样怕冷的话。你会选择在有阳光的下午四五点，漫步在海边的公路上，向左或者向右，随机挑选一个方向。</p>
+<br>
+<pre><code class='code-multiline'>这个方向会决定你在远离什么，在靠近什么.</code></pre>
+<br>
+然后任意的走着，等待着夕阳慢慢的洒下来，看看海边的那一片黄色，怕几张照片，选一个好方向，可以看清楚脸或者显高一点的。 晚上可以找一快背后有灯的大石头，拿一瓶啤酒，听听海浪，或者潮，或者汐，拍打石头的声音，聊聊文字和音乐, 想想远方.
+
+<h3>JeJu 的城</h3>
+当你在海边公路走的时候，如果你选择了右边，那么你会离旧济州比较近，反之，如果你选择了左边，那么你会离新济州比较近。
+
+<ul><li>向右
+</li></ul>
+<br>
+<p>也许旧济州的生命开始于晚上，白天的旧济州无论是七星街还是地下步行街都很少的人，所以你可以在白天很白痴的在七星街的那台钢琴上乱弹，当然如果你注意你的手型，那么你会发现弹起来还是挺有范儿的，而且仔细一听，原来自己离音乐厅里声音离的挺近多。</p>
+<br>
+<p>地下步行街有点像上海的七浦路，听说。很多商品，挺干净，人不多，价格适中，也许有你想要的。</p>
+<br>
+<p>任意选择一个出口走上来之后，或许你会想要去走走看看济州的City Hall，你会沿着路标指示方向去寻找，然而你一定会找不到它在哪儿的。你会走一个有点长的上坡路，你会路过东门市场，那附近有一些听说是 "便衣警察" 的人，然后你会随便走走看看。东门市场会很腥，因为有很多的海产品。然后你会选择一个一条你依然不知道什么目的地的路，然后一直走，直到打上出租车，递上酒店的名片。</p>
+<br>
+<ul><li>向左
+</li></ul>
+<br>
+<p>新济州有新罗，乐天的免税店，所以你会看到好多的移动 WiFi 有着相同的命名方式，因为他们都来自同一个地方。</p>
+<br>
+<p>我忘记了我们那天为什么要去一个叫做 Yeon Dong 的地方了，只记得我们搞错了方向，也许是因为我们只知道这个单词 "Yeon Dong"，所以我们就到了所谓 Yeon Dong, 这个词的发音很重要，你也许要好好学习一下它的调调，<b>(</b>---<b>)</b></p>
+<br>
+<p>到了市区之后，也许会下雨，也许你还不用打伞，到 CU 选择一个确定自己很能吃下去的食物，比如紫菜包饭, 然后随便石头剪刀布选择一个方向吧，自然而然的走走就好, 随便聊聊天, 看看路和人。</p>
+<br>
+<p>然后你会绕了一个圈，发现一个星巴克，然后你会发现你很冷，需要一杯摩卡暖暖身，选择一个靠窗的位置，喝几个小时，直到天黑, 然后你会发现你嗓子有点哑了，可以还是感觉很冷，然后继续坐着吧，反正外面的行人还打着伞。</p>
+<br>
+<p>真的很晚了，好吧，走走没有走过的小街道，找点吃的，当到了某个路口的时候，如果你戴眼镜，你应该可以看到一家中餐厅，而且似乎什么都有，以为是路边破店，进来发现其实很齐整，没有东北口音的女老板，她可以让你发现自己没有韩币的时候返回来刷信用卡，退给你韩币，然后你拿着韩币找 taxi 回海边的酒店。</p>
+<br>
+<h3>JeJu 的吃</h3>
+<p>JeJu 的吃我没有喜欢。</p>
+<br>
+<p>不过如果真的要活下去的话，你需要吃一点海鲜类的各式菜式，或者大块的黑猪肉烧烤，也许大酱汤你会习惯，其实大酱汤的大酱是看不见的，如果你和我一样来自中国西南某小城，你应该会惊讶，为什么酱还能看不见。如果你也喜欢喝点汤，那么参鸡汤可以让你解解饿。希望你不是和我一样，只喜欢一种东西，那么你一定不会像我一样自己饿不饿都不知道。</p>
+<br>
+<h3>最后</h3>
+<p>也许你需要和我一样:</p>
+<br>
+<ul><li>考科目三的时候挂一次
+</li></ul>
+<br>
+<ul><li>住在 JeJu 西海岸的 Hotel
+</li></ul>
+<br>
+<ul><li>有同样没有方向感的伙伴
+</li></ul>
+<br>
+<ul><li>没有陌生的合群能力
+</li></ul>
+<br>
+<ul><li>航班因天气原因取消一次
+</li></ul>
+<br>
+<p>才能够体验这段旅程，然后坐在机场，写下这些文字。</p>
+<br>
+<h1>在linode上搭建ShadowSocks服务实现科学上网</h1>
+<br>
+<p>越强大，越开放，越落后，越封闭。然后恶性循环。</p>
+<br>
+<p>生活在我大党国的程序员真是苦经磨难，每年花了钱买了一个vpn之后，服务商又被搞了，好吧，好在我一直都有备用的云主机，以前用的亚马逊的 EC2, 最近改用了 Linode 的 VPS，速度挺好的，那就自己建立一个 ShadowSocks 来科学上网吧。没有 Google 对于一个程序员来说，或者说对于大多人来说，真是不知如何是好啊。</p>
+<br>
+<h4>服务器端</h4>
+<br>
+<ul><li>安装 nodejs
+</li></ul>
+<br>
+<pre><code class='code-multiline'>  sudo apt-get install nodejs</code></pre>
+<br>
+<ul><li>建立 ShadowSocks server
+</li></ul>
+<br>
+<pre><code class='code-multiline'> git clone git://github.com/clowwindy/shadowsocks-nodejs.git
+ cd shadowsocks-nodejs</code></pre>
+<p><br></p>
+<p>配置文件，替换成你的 Server IP 和你想要的密码.</p>
+<pre><code class='code-multiline'> vim config.json
+     {
+         "server":"200.201.202.203",
+         "server_port":8899,
+         "local_port":4131,
+         "password":"password",
+         "timeout":300,
+         "method":"aes-256-cfb"
+     }</code></pre>
+<p><br></p>
+<p>然后运行 ShadowSocks 服务</p>
+<br>
+<pre><code class='code-multiline'> nohup /usr/local/node/bin/node server.js &gt; log &</code></pre>
+<br>
+<h3>本地客户端</h3>
+在 OSX 平台上，可以下载 ShadowSocks 客户端
+
+<pre><code class='code-multiline'>  https://github.com/shadowsocks/shadowsocks-iOS</code></pre>
+<br>
+安装之后启动，输入你的server信息即可，需要注意的是你的加密方式的选择要和你配置在 ShadowSocks Server 上一致，比如本文中我们选择的是 aes-256-cfb. 默认客户端的模式的自动代理，你也可以手动选择全局代理。然后你就可以畅游天下了.
+
+<h1>我曾经的情绪我曾经的歌</h1>
+
+<h3>曾经，还有以后</h3>
+大学时候，我和我的兄弟何钞说，任性的去活着吧，不要给别人造成伤害就好。然而现在发现，原来任性的活着，有时候真的会伤害到别人，现在我会固执的认为，每一个人活着的时间越长，那么你造成的伤害就越多。所以有些人变成了自闭症活着，他们学会了拒绝所有的交流，活在自己的世界里，因为他们知道，交流是伤害的开始。
+
+<h3>曾经</h3>
+我在大学里，是一个学习很差的文艺爱好者，我不敢说自己是文艺青年，因为自己第一不抽烟，而不喝二锅头，三还不睡果儿(我倒是想，有那心没有那胆儿啊)。而仅仅哼哼和弦，写写歌儿而已。但是很奇怪，有一些和弦，我不知觉就已经忘记，有些歌词，也很自然就丢失了。但是有一些却依然还偶尔跳动在脑海里，特别是在自己陷入某些情绪的时候。
+
+熬了一夜写了一篇很长的小说，<那个叫蝴蝶的女孩>, 本科毕业的时候和女孩子说，我曾经一度深深的喜欢你，怕打扰到你，所以毕业了才和你说。她说，我其实是知道的，眼睛很难骗人。大学的恋爱总是很单纯，但是也许真的没有一个人可以忍受我这无边际的自由散漫，在一起一年了之后，另外一个女孩子去了韩国之前我们就决定分开了，我坐了52个小时的火车跑到她所在的城市里，在嘉陵江边聊了大半夜，没有能让我们返回到当初的样子。我说，你可以陪我一起看看解放碑吗，她说，我希望你可以变成一个温暖的人。好几年过去了，我也不知道自己有没有变温暖。
+
+后来当我开始沉迷于代码之后，我总以为我应该就这样安安静静的做个代码美男子，然后等待着毕业漂流到社会这个五彩缤纷，乌烟瘴气的河流中，可以谁又能想到怦然心动总是来的不经意呢，浑浑噩噩的，烂烂漫漫的又占满了大部分的研究生生涯，这段似乎开始，又莫名结束的情愫，也算是我学生生涯的单纯句号吧。
+
+<h3>现在和未来</h3>
+现在，我发现自己还是那个喜欢拿着吉他拼凑这旋律，放任着情绪，自由散漫生活的男孩子，年龄给予了我经历，却没有给我经验。然而这是我希望的。 未来，我可能依然做不好一个温暖的人。
+
+<h3>歌曲</h3>
+好吧，如果你偶然走错进入了这里，并且把这篇文章看到这里。那么再忍耐一下，看看我当年写的歌吧, 这首歌发生在夏天，哎，那个夏天真是挺漫长的。
+
+<pre><code class='code-multiline'>
+《那个夏天》
+
+都怪那个夏天太漫长
+我就这样迷失我自己
+
+都怪那个月夜太灿烂
+你就这样放弃你自己
+
+我们两片孤独的叶子
+就这样
+相遇
+
+我们都得到了什么
+我们都失去了什么
+我们都回忆了什么
+我们都忘记了什么
+
+我们现在还在寻找着
+寻找着
+爱情
+</code></pre>
+<p><br></p>
+<p>直到了那年冬天才结束</p>
+<br>
+<pre><code class='code-multiline'>
+《那年冬天》
+
+一直在等候
+你温暖的左手
+
+一直在感受
+你独特的温柔
+
+你家的巷口
+我徘徊了很久
+
+不敢打扰你
+只好往回走
+
+那天吹起东南风
+街上太冷没有人
+
+只有孤单的街灯
+陪我们直到凌晨十分
+不知是谁的哭声
+惊醒沉睡的夜深
+揭开层层的伤痕
+没人理解的疼痛
+</code></pre>
+<p><br></p>
+<p>后来我路过了北京</p>
+<br>
+<pre><code class='code-multiline'>《路过有你的城市》
+
+路过有你的城市
+听到人群的喧嚣
+看到灯火的红绿
+你还像昨天一样纯真吗
+你还像蝴蝶一样翩翩飞舞吗
+
+你变了吗
+你变了吧
+就这样失去了
+就这样失去了
+
+我失去了你
+我失去我自己
+我失去了你
+我失去我自己
+</code></pre>
+<p><br></p>
+<pre><code class='code-multiline'>《我只想要》
+
+我只想要
+风中拥抱
+不需要理由
+
+我只想要
+一起逃跑
+逃到外星球
+
+逃到属于我们的地球
+寻找到属于我们的自由
+
+这世界纷扰
+让人男人难熬
+人群们喧嚣
+每一秒都让我想大声尖叫
+
+到底怎么才好
+世界仅在想象中美好
+付出那么多辛劳
+为何收获那么少
+
+我只想风中拥抱
+不需要理由
+我只想要
+一起逃跑
+逃到外星球
+逃到属于我们的地球
+寻找到属于我们的自由</code></pre>
+<p><br></p>
+<pre><code class='code-multiline'>《说好的》
+
+说好的故事
+没有了结局
+
+许下的承诺
+你没有再提
+
+曾经的回忆
+都变成荆棘
+
+编织的未来
+亦不能重来
+
+两个人的电影
+去变成我的独家记忆
+一场爱的烟火
+燃烧成你的悲伤泪滴</code></pre>
+<p><br></p>
+<h1>Worth Going Index</h1>
+<br>
+<p>最近有人在 <a href="https://news.ycombinator.com">Hacker News</a> 问 <a href="https://news.ycombinator.com/item?id=17332796">"How do I find a meaningful software engineering job?"</a>, 其中有一个人的回复我觉得有点意思, 而且和现在的看法有些些许的类似。</p>
+<br>
+<blockquote>
+<p>I'm a late-career software developer. 30+ years in the trenches doing this...</p>
+<p>I've done "meaningful" work at companies that treated my like a consumable resource, and less meaningful work at companies that treated me like a person. I prefer the latter. My suggestion is don't jump at the first interesting work, look more for culture and career opportunity. You can find both, those jobs are not quite as rare as unicorns.</p>
+</blockquote>
+<p>最近和常常和 <a href="https://twitter.com/haojianzong">Jakehao</a> 聊聊工作这个事，什么样子的工作才是好工作，我们不断的跳槽到底在挑什么. 我和 Jake 经过这几年的工作经历，都觉得自己并没有单单为了工资而跳槽，由于我们俩都有过不成功的换工作经历，在一个自己不喜欢的地方和氛围下工作，是一种极其折磨人的状态，一般很难呆太久。在找工作的时候，我们两不时会聊自己的面试情况，自己的心态和感受，经过简单的总结之后，我们得到了这样一个公式</p>
+<br>
+<pre><code class='code-multiline'>WGI = WLB * PV * SL * TA</code></pre>
+<br>
+<blockquote>
+WGI ( Worth Going Index): 值得去指数
+WLB (Work Life Balance): 工作生活平衡
+PV ( Product Value ): 产品价值
+SL ( Salary Level ): 工资水平
+TA ( Team Atmosphere ): 团队氛围
+</blockquote>
+WGI 越高，这个工作机会的价值越高，越值得我们去尝试；反之，WGI 越低则越表明这个工作机会的价值越低，越不值得我们尝试。
+
+WGI 的这四个决定因素: 工作生活平衡 ( Work Life Balance, WLB), 产品价值( Product Value, PV ),  工资水平 ( Salary Level, SL), 和团队氛围 ( Team Atmosphere, TA ). 是来源我们两个数次的成功或者失败的换工作经历的总结而来的。
+
+<h2>Work Life Balance</h2>
+工作生活平衡，966 在很多中国的 IT 公司不知不觉已经常态，这有点让人泄气，对很多人来说，也包含着有些无奈。 我是旗帜鲜明的排斥任何形式的加班的，我不喜欢任何形式的 Push。每一个人都是成年人，成年人就应该知道怎么规划自己的时间，怎么安排自己的工作，怎么去做任务的优先级排序，尽量少的给别人造成障碍和拖累拖累团队。绝大多数的加班都是无意义的，作为 Leader/Boss 让你的团队成员加班，就是赤裸裸用战术的勤奋来掩盖战略的愚蠢，无可争辩。
+
+<h2>Product Value</h2>
+由于工作占据了我们生活的很大一部分，把自己那么大的时间和精力投入到一个没有太多意义的产品研发中，很难保持长久的激情。 如果参与到一个对自己，对这个社会有意义的产品开发中，每一次的代码的提交，都在让这个世界变得更好一点点，让人们的生活变得更好一点点，会让我们能保持一种充满激情的工作状态，而这种状态也让我们做事情事半功倍，每天的工作都是一种享受，也有助于我们有更多的时间去享受工作之外的生活。
+
+<h2>Salary Level</h2>
+工资水平，我们都是平凡人，都需要买面包和牛奶。我们不是神，所以不能靠各种画出来的大饼来填饱肚子。
+
+<h2>Team Atmosphere</h2>
+团队氛围，好的团队让每一个人都工作开心，相处融洽，相互帮助，分享知识，共同成长。好的团队并不是说要每一个人都要成为好朋友，我们都有自己的私人空间，尊重是一个好的团队的前提，尊重个人自由，尊重个人选择，尊重个人独立的想法。互助合作，每一个人都有新手时期，作为一个资深者应该给新人适当的给予帮助。团队中齐心协力才能让团队获得成功，但是团队成功并不意味着必须牺牲个人成功，相反，团队关心以及帮助团队成员获得个人的成功会更加有助于团队的成功。
+
+有了这个公式之后，在我们找工作做选择有一个清晰的对比了，我把自己经历过的工作粗略的挨个计算了一下，结果如下:
+
+|  Company        |  WLB           |  PV     | SL       | TA  |   WGI |
+| <s>-----------</s> |-------------| ----------|---------|------------| -----------|
+| Synopsys     | 1 | 0.7 | 0.7 | 0.7 | 0.343 |
+| Second Spectrum      |  0.8      |   0.6 | 0.8| 0.8 | 0.3072 |
+| Splunk | 1    |   0.6  | 0.9 | 0.9 | 0.486 |
+| 设计家 | 0.5 | 0.7 | 0.8 | 0.8 | 0.224 |
+| Udacity | 1 | 0.9 | 0.8 | 0.9 | 0.648 |
+
+不妨你也是计算一下你的前任和现任雇主们吧.
+
+<h1>Go 开发小记之测试</h1>
+
+<h2>闲话测试</h2>
+测试让我们写更好的代码，在经历的公司中，Synopsys 和 Splunk 对于测试的要求都很高，核心产品的测试覆盖非常全, 每一个 release 都有超级详细的测试报告。公司内部都有相应的团队 (QA 或者 Integration Team)来负责软件质量, 当然对于不同的产品测试的要求也不太一样，内部的工具其实对于测试就没有太高的要求。但也有例外，当时在 Second Spetrum 的时候，团队的工程师对于测试的要求较高，只服务公司内部的产品也要求比较全面的测试，团队中一些资深的工程师辅导新人的时候，有的甚至是从如何写好一个测试开始的。
+
+来到 Udacity 之后，我对自己的要求是，每一个 feature 都必须配备对应的单元测试，对于对外的服务必须有集成测试。做 Code Review 的时候，如果没有对应的测试代码，也不会想拿到 approve.   每一个工程师都应该认识到测试的重要性， 写测试不仅可以保证了我们功能的正常运行，也让我们思考如何模块化我们的代码，思考业务场景的覆盖。而且其实测试节省我们大量的时间，在设计家工作的时候，没有任何的单元测试，你可以想象没有任何单元测试，对于开发一个重数据模型，基于事件的重交互型的 Web 应用是多么的痛苦吗，我们花了大量的时间在重复的修复同一个 bug, 印象最深的是有一个同事负责一个在不同的场景下自动生成台面的功能，由于没有测试代码，每一次为了修复一个场景的产生问题，都会导致无数的问题。最后那段代码变成一个时常堵塞的下水道，谁都不想碰，但是又总出现问题，只能硬着头皮捏着鼻子去打开修复。
+
+<h2>Testing in Golang</h2>
+Go 有内置的测试命令 <code class='code-inline'>go test</code>，它提供了基本的测试体验。而且也天然支持 <code class='code-inline'>-cover</code>自动产生测试覆盖率，可以看到 Go 开发者对于测试的重视。
+
+<h3>Unit Test</h3>
+
+<ul><li>基本知识
+</li></ul>
+<br>
+<p>假设我们有这样的代码: hello.go</p>
+<pre><code class='code-multiline'>package hello
+
+import (
+	"fmt"
+)
+
+func Hello(name string) string {
+	return fmt.Sprintf("Hello %s", name)
+}
+</code></pre>
+<p><br></p>
+<p>大致上我们的单元测试代码会是这样: hello_test.go</p>
+<br>
+<pre><code class='code-multiline'>package hello
+
+import "testing"
+
+func TestHello(t *testing.T) {
+	name := "Tom"
+	msg := Hello(name)
+	expect := "Hello Tom"
+	if msg != expect {
+		t.Errorf("%s != %s", msg, expect)
+	}
+}</code></pre>
+<p><br></p>
+<p>你可以看到，我们的文件名遵循这样的规则: 功能代码文件 <some name>.go, 测试代码的文件名会是 <some name>_test.go.  我们可以直接运行测试获得测试结果:</p>
+<br>
+<pre><code class='code-multiline'>$ go test
+PASS
+ok  	github.com/udacity/go-play-arround	0.007s</code></pre>
+<p><br></p>
+<p>当然我们可以直接获取覆盖率:</p>
+<br>
+<pre><code class='code-multiline'>$ go test --cover
+PASS
+coverage: 100.0% of statements
+ok  	github.com/udacity/go-play-arround	0.008s</code></pre>
+<p><br></p>
+<p>如果不喜欢自己写断言，你可以使用 <a href="https://github.com/stretchr/testify">stretchr/testify</a>这个第三库，写起来会更舒服一些。而且支持 Mocking 和 Test suite。</p>
+<br>
+<ul><li>使用不同的 package name
+</li></ul>
+<br>
+<p>我一般会使用 '<package_name>_test' 这样子的包名来当作测试包名，使用不同的包名会让让我们站在外部使用者的角度来完成测试，更好的保证开放出去的 API 是不是有用。所以在我们的测试代码中，我们会变成这样:</p>
+<br>
+<pre><code class='code-multiline'>package hello_test
+
+import (
+  "testing"
+  . github.com/udacity/go-play-arround/hello
+)
+
+func TestHello(t *testing.T) {
+	name := "Tom"
+	msg := Hello(name)
+	expect := "Hello Tom"
+	if msg != expect {
+		t.Errorf("%s != %s", msg, expect)
+	}
+}</code></pre>
+<p><br></p>
+<p>你可以看到上面的代码中，我们使用了 <a href="https://golang.org/ref/spec#Import_declarations">dot import</a>, 它会把所有 <code class='code-inline'>hello</code> 这个包中 exported 出来的 identifiers 在当前包中声明。这样做呢，似乎是一种比较 clean 的做法，不过也有不同的观点. 有人会说</p>
+<br>
+<blockquote>
+<p>Since this test is testing the exported API, it doesn’t make sense to pretend to be inside of the package.</p>
+</blockquote>
+<br>
+<ul><li>使用 DATA-DOG/go-sqlmock 来测试数据库交互
+</li></ul>
+<br>
+<p>如果你的模块中有数据库的交互，在单元测试中不断的启动然后关闭数据库显然是不合适的，所以我们一般在集成测试中才会做这些耗时的操作，所以通过 <a href="https://github.com/DATA-DOG/go-sqlmock">DATA-DOG/go-sqlmock</a> 可以很轻易帮助我们进行单元测试。一个简单的测试样例可能是这样:</p>
+<br>
+<pre><code class='code-multiline'>package model
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
+)
+
+func TestBuildByUdacityId(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer conn.Close()
+
+	rows := sqlmock.NewRows([]string{"openid", "first_name", "last_name", "email"})
+	rows.AddRow("12345", "minghe", "huang", "minghe@a.com")
+	query := "SELECT (.+) FROM users"
+	mock.ExpectQuery(query).WillReturnRows(rows)
+
+	user, err := BuildUserByUdactiyId("12345", conn)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "12345", user.OpenId)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		assert.Errorf(t, err, "there were unfulfilled expectations: %s")
+	}
+}</code></pre>
+<p><br></p>
+<h3>Integration Test</h3>
+<ul><li>基本方法
+</li></ul>
+<p>集成测试是从一个外观者的角度去测试我们系统是否正常服务的保证, 这就意味着我们要保证各个组件（或者服务) 正常启动了去运行我们的集成测试.  这时候 <code class='code-inline'>TestMain</code> 就派上用场了。</p>
+<br>
+<pre><code class='code-multiline'>package main
+
+import (
+	"fmt"
+	"os"
+	"testing"
+)
+
+func setup() {
+	fmt.Println("this is setup step")
+	fmt.Println("starting up a service")
+	fmt.Println("starting up b service")
+}
+
+func teardown() {
+	fmt.Println("this is teardown step")
+	fmt.Println("stop a service")
+	fmt.Println("stop b service")
+}
+
+func TestA(t *testing.T) {
+	fmt.Println("A")
+}
+
+func TestB(t *testing.T) {
+	fmt.Println("B")
+}
+
+func TestMain(m *testing.M) {
+	setup()
+
+	ret := m.Run()
+
+	teardown()
+
+	os.Exit(ret)
+}</code></pre>
+<p><br></p>
+<p><code class='code-inline'>TestMain</code> 会在 <code class='code-inline'>go test</code>运行的时候被调用。所以我们可以在 <code class='code-inline'>setup()</code>中做一些测试准备工作，然后在 <code class='code-inline'>teardown</code>中做清理工作.</p>
+<br>
+<p>显然这样做似乎会一些问题: 因为每次运行 <code class='code-inline'>go test</code> 都会 <code class='code-inline'>TestMain</code>，而我们并不是每次都要运行集成测试，因为集成测试很多时候会涉及数据库的启动，网络服务的请求等，会花很多时间，更多的时候，我们的改动只需要运行一下单元来简单测试即可。那么怎么才能够避免每次都运行集成测试呢？</p>
+<br>
+<ul><li>testing.Short()
+</li></ul>
+<br>
+<p> <code class='code-inline'>testing.Short()</code> 会返回当我们在运行测试的时候是否指定了 <code class='code-inline'>-short</code> flag。 所以通过检查 <code class='code-inline'>testing.Short()</code> 可以来决定我们是否需要运行集成测试. 所以我们可以这样写我们的测试.</p>
+<br>
+<pre><code class='code-multiline'>package main
+
+import (
+  "flag"
+  "fmt"
+  "os"
+  "testing"
+)
+
+func setup() {
+  fmt.Println("this is setup step")
+  fmt.Println("starting up a service")
+  fmt.Println("starting up b service")
+}
+
+func teardown() {
+  fmt.Println("this is teardown step")
+  fmt.Println("stop a service")
+  fmt.Println("stop b service")
+}
+
+func TestA(t *testing.T) {
+  if testing.Short() {
+    t.Skip()
+  }
+}
+
+func TestB(t *testing.T) {
+  if testing.Short() {
+    t.Skip()
+  }
+}
+
+func TestMain(m *testing.M) {
+  flag.Parse()
+
+  if !testing.Short() {
+    setup()
+  }
+
+  ret := m.Run()
+
+  if !testing.Short() {
+    teardown()
+  }
+
+  os.Exit(ret)
+}</code></pre>
+<p><br></p>
+<p>那么能不能在进一步呢，通过检查 <code class='code-inline'>testing.Short()</code>我们决定我们是否需要启动相关服务已经运行集成测试，但是在测试代码中重复的添加 <code class='code-inline'>testing.Short()</code>显然是难看的，拓展性不好。如何能够更 Scale 呢?</p>
+        </div>
+        <script type="text/javascript">
+            (function() {
+
+    var doc_ols = document.getElementsByTagName("ol");
+
+    for ( i=0; i<doc_ols.length; i++) {
+
+        var ol_start = doc_ols[i].getAttribute("start") - 1;
+        doc_ols[i].setAttribute("style", "counter-reset:ol " + ol_start + ";");
+
+    }
+
+})();
+        </script>
+        <style>
+            html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,embed,figure,figcaption,footer,header,hgroup,menu,nav,output,ruby,section,summary,time,mark,audio,video{margin:0;padding:0;border:0;font:inherit;font-size:100%;vertical-align:baseline}html{line-height:1}ol,ul{list-style:none}table{border-collapse:collapse;border-spacing:0}caption,th,td{text-align:left;font-weight:normal;vertical-align:middle}q,blockquote{quotes:none}q:before,q:after,blockquote:before,blockquote:after{content:"";content:none}a img{border:none}article,aside,details,figcaption,figure,footer,header,hgroup,main,menu,nav,section,summary{display:block}*{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}html{font-size:87.5%;line-height:1.57143em}html{font-size:14px;line-height:1.6em;-webkit-text-size-adjust:100%}body{background:#fcfcfc;color:#545454;text-rendering:optimizeLegibility;font-family:"AvenirNext-Regular"}a{color:#de4c4f;text-decoration:none}h1{font-family:"AvenirNext-Medium";color:#333;font-size:1.6em;line-height:1.3em;margin-bottom:.78571em}h2{font-family:"AvenirNext-Medium";color:#333;font-size:1.3em;line-height:1em;margin-bottom:.62857em}h3{font-family:"AvenirNext-Medium";color:#333;font-size:1.15em;line-height:1em;margin-bottom:.47143em}p{margin-bottom:1.57143em;hyphens:auto}hr{height:1px;border:0;background-color:#dedede;margin:-1px auto 1.57143em auto}ul,ol{margin-bottom:.31429em}ul ul,ul ol,ol ul,ol ol{margin-bottom:0px}ol li:before{content:counter(ol) ".";counter-increment:ol;color:#e06e73;text-align:right;display:inline-block;min-width:1em;margin-right:0.5em}b,strong{font-family:"AvenirNext-Bold"}i,em{font-family:"AvenirNext-Italic"}code{font-family:"Menlo-Regular"}.text-overflow-ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sf_code_string,.sf_code_selector,.sf_code_attr-name,.sf_code_char,.sf_code_builtin,.sf_code_inserted{color:#D33905}.sf_code_comment,.sf_code_prolog,.sf_code_doctype,.sf_code_cdata{color:#838383}.sf_code_number,.sf_code_boolean{color:#0E73A2}.sf_code_keyword,.sf_code_atrule,.sf_code_rule,.sf_code_attr-value,.sf_code_function,.sf_code_class-name,.sf_code_class,.sf_code_regex,.sf_code_important,.sf_code_variable,.sf_code_interpolation{color:#0E73A2}.sf_code_property,.sf_code_tag,.sf_code_constant,.sf_code_symbol,.sf_code_deleted{color:#1B00CE}.sf_code_macro,.sf_code_entity,.sf_code_operator,.sf_code_url{color:#920448}.note-wrapper{max-width:46em;margin:0px auto;padding:1.57143em 3.14286em}.note-wrapper.spotlight-preview{overflow-x:hidden}u{text-decoration:none;background-image:linear-gradient(to bottom, rgba(0,0,0,0) 50%,#e06e73 50%);background-repeat:repeat-x;background-size:2px 2px;background-position:0 1.05em}s{color:#878787}p{margin-bottom:0.1em}hr{margin-bottom:0.7em;margin-top:0.7em}ul li{text-indent:-0.35em}ul li:before{content:"•";color:#e06e73;display:inline-block;margin-right:0.3em}ul ul{margin-left:1.25714em}ol li{text-indent:-1.45em}ol ol{margin-left:1.25714em}blockquote{display:block;margin-left:-1em;padding-left:0.8em;border-left:0.2em solid #e06e73}.todo-list ul{margin-left:1.88571em}.todo-list li{text-indent:-1.75em}.todo-list li:before{content:"";display:static;margin-right:0px}.todo-checkbox{text-indent:-1.7em}.todo-checkbox svg{margin-right:0.3em;position:relative;top:0.2em}.todo-checkbox svg #check{display:none}.todo-checkbox.todo-checked #check{display:inline}.todo-checkbox.todo-checked .todo-text{text-decoration:line-through;color:#878787}.code-inline{display:inline;background:white;border:solid 1px #dedede;padding:0.2em 0.5em;font-size:0.9em}.code-multiline{display:block;background:white;border:solid 1px #dedede;padding:0.7em 1em;font-size:0.9em;overflow-x:auto}.hashtag{display:inline-block;color:white;background:#b8bfc2;padding:0.0em 0.5em;border-radius:1em;text-indent:0}.hashtag a{color:#fff}.address a{color:#545454;background-image:linear-gradient(to bottom, rgba(0,0,0,0) 50%,#0da35e 50%);background-repeat:repeat-x;background-size:2px 2px;background-position:0 1.05em}.address svg{position:relative;top:0.2em;display:inline-block;margin-right:0.2em}.color-preview{display:inline-block;width:1em;height:1em;border:solid 1px rgba(0,0,0,0.3);border-radius:50%;margin-right:0.1em;position:relative;top:0.2em;white-space:nowrap}.color-code{margin-right:0.2em;font-family:"Menlo-Regular";font-size:0.9em}.color-hash{opacity:0.4}.ordered-list-number{color:#e06e73;text-align:right;display:inline-block;min-width:1em}.arrow svg{position:relative;top:0.08em;display:inline-block;margin-right:0.15em;margin-left:0.15em}.arrow svg #rod{stroke:#545454}.arrow svg #point{fill:#545454}mark{color:inherit;display:inline;padding:0.2em 0.5em;background-color:#fcffc0}img{max-width:100%;height:auto}
+
+        </style>
+    </body>
+</html>
